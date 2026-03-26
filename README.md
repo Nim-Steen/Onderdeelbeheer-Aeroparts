@@ -23,4 +23,5 @@ Het is echter handig om deze (ook) in GitHub bij te houden, dus, wanneer je (met
 2. Klik op [New Issue]
 3. Kies "Bug report"
 4. Vul het template in, haal kopjes weg die niet relevant zijn
+
 Op deze manier kunnen we nieuwe branches aanmaken voor bugs, en pull requests aan bugs koppelen om overzicht te houden waar iets gefixt wordt/is.
