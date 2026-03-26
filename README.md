@@ -16,4 +16,11 @@ Voor alle code wordt de volgende werkwijze gehanteerd:
 
 Doel: Kwaliteit waarborgen en samenwerking verbeteren.
 
-
+## Bugs
+In de SharePoint staat een Excel met de testcases, waarin ook een tabblad is om risks en issues bij te houden. 
+Het is echter handig om deze (ook) in GitHub bij te houden, dus, wanneer je (met of zonder test) een bug vindt:
+1. Ga in GitHub naar Issues
+2. Klik op [New Issue]
+3. Kies "Bug report"
+4. Vul het template in, haal kopjes weg die niet relevant zijn
+Op deze manier kunnen we nieuwe branches aanmaken voor bugs, en pull requests aan bugs koppelen om overzicht te houden waar iets gefixt wordt/is.
