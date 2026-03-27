@@ -77,7 +77,7 @@ class TestClassSystem:
 
   
   
-  def example_test(self):
+  def test_example(self):
     request = app.OrderRequest("some id", "some no", "some type", 0, "prio", "requester", datetime.now(), "center") 
     # insert data in request for the tested order request
     # optionally change the self.parts/self.stock/self.offers for the specific test
@@ -95,7 +95,7 @@ class TestClassSystem:
 class TestClassUnitValidateRequest:
   pass
 
-  def example_test(self):
+  def test_example(self):
     request = app.OrderRequest("some id", "some no", "some type", 0, "prio", "requester", datetime.now(), "center")
     # insert data in request for the tested order request
     # optionally change the self.parts for the specific test
