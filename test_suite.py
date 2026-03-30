@@ -137,9 +137,14 @@ class TestClassSystem:
   
   
   def test_example(self, complete_parts, complete_stock, complete_offers):
+    """
+    Dit is een voorbeeld van een test van de functie place_order.
+    Vul op de eerste regel de variabelen in van de OrderRequest die je wilt testen, de input.
+    Maar eventueel een eigen parts/stock/offers lijst aan zoals relevant voor de test.
+    Roep de functie place_order op, en sla deze op in een variabele (hier 'response').
+    Schrijf een assert statement waar je de 'response' vergelijkt met de verwachte output.
+    """
     request = app.OrderRequest("some id", "some no", "some type", 0, "prio", "requester", datetime.now(), "center") 
-    # insert data in request for the tested order request
-    # optionally change the parts/stock/offers for the specific test
 
     response = app.place_order(request, complete_parts, complete_stock, complete_offers)
     
@@ -154,9 +159,14 @@ class TestClassUnitValidateRequest:
   pass
 
   def test_example(self, complete_parts):
+    """
+    Dit is een voorbeeld van een test van de functie validate_request.
+    Vul op de eerste regel de variabelen in van de OrderRequest die je wilt testen, de input.
+    Maar eventueel een eigen parts lijst aan zoals relevant voor de test.
+    Roep de functie validate_request op, en sla deze op in een variabele (hier 'response').
+    Schrijf een assert statement waar je de 'response' vergelijkt met de verwachte output.
+    """
     request = app.OrderRequest("some id", "some no", "some type", 0, "prio", "requester", datetime.now(), "center")
-    # insert data in request for the tested order request
-    # optionally change the parts for the specific test
 
     response = app.validate_request(request, complete_parts)
 
