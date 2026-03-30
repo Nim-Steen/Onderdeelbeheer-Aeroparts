@@ -1,5 +1,5 @@
 """
-PREREQUISITE: typ het volgende in terminal:
+PREREQUISITE: typ het volgende in terminal: (dit hoeft alleen de eerste keer)
   pip install -U pytest
 
 Om tests uit te voeren, typ het volgende in terminal: 
