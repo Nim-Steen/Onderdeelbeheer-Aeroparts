@@ -1,3 +1,32 @@
+"""
+PREREQUISITE: typ het volgende in terminal:
+  pip install -U pytest
+
+Om tests uit te voeren, typ het volgende in terminal: 
+  python -m pytest
+______________________________________________________________________________________________________
+
+In dit bestand staan tests (functies beginnende met 'test') verdeeld in test classes (classes beginnende met Test). 
+In de basis is een test een functie met een 'assert' statement, en de test controleert of wat er bij assert staat klopt.
+Bijvoorbeeld: 
+  def test_kan_ik_rekenen():
+    assert 1==1
+zal goedgekeurd worden, maar
+  def test_ik_kan_niet_rekenen():
+    assert 1==2
+zal falen.
+
+In de testfunctie kun je andere functies aanroepen. In het bijzonder kun je functies uit het aeroparts script aanroepen. 
+Ik heb dat script hier 'app' genoemd, dus je kunt bijvoorbeeld de place_order functie gebruiken door 'app.place_order' te typen (met de variabelen tussen haakjes)
+
+Om de variabelen makkelijker te maken kunnen we ze van tevoren definiëren, zo heb ik aan het begin 'parts' gedefiniëerd met alle mogelijke parts. 
+Deze kunnen dan in alle tests gebruikt worden.
+
+Qua organisatie is nu mijn idee om een class te maken per functie die getest moet worden. 
+Dan kan in de class de relevante variabelen al gedefiniëerd worden, en eventueel in de test zelf nog worden aangepast. 
+Maar dit is pas een eerste opzet en misschien niet de beste manier om dit aan te pakken. 
+"""
+
 import aeroparts_order_app as app
 from datetime import datetime
 
@@ -72,8 +101,8 @@ parts = {
 
 # A class to test the full system, so everything that happens when place_order is called
 class TestClassSystem:
-  stock = [] # insert List of app.StockItem with the items available in warehouses
-  offers = [] # insert List of app.SupplierOffer with the items that can be bought from suppliers
+  stock = [] # TODO insert List of app.StockItem with the items available in warehouses
+  offers = [] # TODO insert List of app.SupplierOffer with the items that can be bought from suppliers
 
   
   
