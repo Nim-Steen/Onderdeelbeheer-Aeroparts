@@ -30,72 +30,77 @@ Maar dit is pas een eerste opzet en misschien niet de beste manier om dit aan te
 import aeroparts_order_app as app
 from datetime import datetime
 
-# insert str: app.Part dictionary with some possible parts, where the str is the part_no
+# insert str: app.Part dictionary with some possible parts, where the str is the part_no. Covers every relevant combination of variables.
 # each part named for the type of item: A/B (plane), C/NC (certificate or no certificate), SL/NSL (shelf life or no shelf life)
+# description writes out the combination of variables
+# aircraft_type is either A320 or B737
+# requires_certificate is either True or False
+# shelf_life_days is either some number or None (meaning no shelf life)
+# hazmat is irrelevant for the current script so all false
 parts = {
   "A-C-SL": app.Part(
     part_no = "A-C-SL",
-    description= "Plane A with certificate and shelf life", # irrelevant in script
-    aircraft_type = "A320",           # e.g. "A320", "B737" 
-    requires_certificate = True,   # EASA Form 1 / FAA 8130-3 
-    shelf_life_days = 10,  # None means no shelf life 
-    hazmat = False, # irrelevant in script
+    description= "Plane A with certificate and shelf life", 
+    aircraft_type = "A320", 
+    requires_certificate = True, 
+    shelf_life_days = 10, 
+    hazmat = False, 
   ),
   "A-C-NSL": app.Part(
     part_no = "A-C-NSL",
-    description= "Plane A with certificate and no shelf life", # irrelevant in script
-    aircraft_type = "A320",           # e.g. "A320", "B737" 
-    requires_certificate = True,   # EASA Form 1 / FAA 8130-3 
-    shelf_life_days = None,  # None means no shelf life 
-    hazmat = False, # irrelevant in script
+    description= "Plane A with certificate and no shelf life", 
+    aircraft_type = "A320", 
+    requires_certificate = True, 
+    shelf_life_days = None, 
+    hazmat = False, 
   ),
   "A-NC-SL": app.Part(
     part_no = "A-NC-SL",
-    description= "Plane A with shelf life and no certificate", # irrelevant in script
-    aircraft_type = "A320",           # e.g. "A320", "B737" 
-    requires_certificate = False,   # EASA Form 1 / FAA 8130-3 
-    shelf_life_days = 10,  # None means no shelf life 
-    hazmat = False, # irrelevant in script
+    description= "Plane A with shelf life and no certificate", 
+    aircraft_type = "A320", 
+    requires_certificate = False, 
+    shelf_life_days = 10, 
+    hazmat = False, 
   ),
   "A-NC-NSL": app.Part(
-    part_no = "4",
-    description= "Plane A with no certificate and shelf life", # irrelevant in script
-    aircraft_type = "A320",           # e.g. "A320", "B737" 
-    requires_certificate = False,   # EASA Form 1 / FAA 8130-3 
-    shelf_life_days = None,  # None means no shelf life 
-    hazmat = False, # irrelevant in script
+    part_no = "A-NC-NSL",
+    description= "Plane A with no certificate and shelf life", 
+    aircraft_type = "A320", 
+    requires_certificate = False,
+    shelf_life_days = None, 
+    hazmat = False, 
   ),
   "B-C-SL": app.Part(
     part_no = "B-C-SL",
-    description= "Plane B with certificate and shelf life", # irrelevant in script
-    aircraft_type = "B737",           # e.g. "A320", "B737" 
-    requires_certificate = True,   # EASA Form 1 / FAA 8130-3 
-    shelf_life_days = 10,  # None means no shelf life 
-    hazmat = False, # irrelevant in script
+    description= "Plane B with certificate and shelf life", 
+    aircraft_type = "B737", 
+    requires_certificate = True,
+    shelf_life_days = 10, 
+    hazmat = False, 
   ),
   "B-C-NSL": app.Part(
     part_no = "B-C-NSL",
-    description= "Plane B with certificate and no shelf life", # irrelevant in script
-    aircraft_type = "B737",           # e.g. "A320", "B737" 
-    requires_certificate = True,   # EASA Form 1 / FAA 8130-3 
-    shelf_life_days = None,  # None means no shelf life 
-    hazmat = False, # irrelevant in script
+    description= "Plane B with certificate and no shelf life", 
+    aircraft_type = "B737", 
+    requires_certificate = True, 
+    shelf_life_days = None, 
+    hazmat = False, 
   ),
   "B-NC-SL": app.Part(
     part_no = "B-NC-SL",
-    description= "Plane B with shelf life and no certificate", # irrelevant in script
-    aircraft_type = "B737",           # e.g. "A320", "B737" 
-    requires_certificate = False,   # EASA Form 1 / FAA 8130-3 
-    shelf_life_days = 10,  # None means no shelf life 
-    hazmat = False, # irrelevant in script
+    description= "Plane B with shelf life and no certificate", 
+    aircraft_type = "B737", 
+    requires_certificate = False, 
+    shelf_life_days = 10, 
+    hazmat = False, 
   ),
   "B-NC-NSL": app.Part(
     part_no = "B-NC-NSL",
-    description= "Plane B with no certificate and shelf life", # irrelevant in script
-    aircraft_type = "B737",           # e.g. "A320", "B737" 
-    requires_certificate = False,   # EASA Form 1 / FAA 8130-3 
-    shelf_life_days = None,  # None means no shelf life 
-    hazmat = False, # irrelevant in script
+    description= "Plane B with no certificate and shelf life", 
+    aircraft_type = "B737", 
+    requires_certificate = False, 
+    shelf_life_days = None, 
+    hazmat = False, 
   ),
 } 
 
@@ -109,7 +114,7 @@ class TestClassSystem:
   def test_example(self):
     request = app.OrderRequest("some id", "some no", "some type", 0, "prio", "requester", datetime.now(), "center") 
     # insert data in request for the tested order request
-    # optionally change the self.parts/self.stock/self.offers for the specific test
+    # optionally change the parts/self.stock/self.offers for the specific test
 
     response = app.place_order(request, parts, self.stock, self.offers)
     
@@ -127,7 +132,7 @@ class TestClassUnitValidateRequest:
   def test_example(self):
     request = app.OrderRequest("some id", "some no", "some type", 0, "prio", "requester", datetime.now(), "center")
     # insert data in request for the tested order request
-    # optionally change the self.parts for the specific test
+    # optionally change the parts for the specific test
 
     response = app.validate_request(request, parts)
 
