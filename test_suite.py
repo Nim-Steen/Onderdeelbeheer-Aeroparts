@@ -236,15 +236,24 @@ class TestClassUnitValidateRequest:
 
     assert response
 
-  def test_case_38(self, complete_parts, basic_order_request):
+  def test_case_38_and_42(self, complete_parts, basic_order_request):
     """
     Test checks whether the validate_request function returns any issues with the default parts and order request.
     Test passes if no issue has been raised.
 
-    NOTE: Test currently fails because an erronous issue is raised (see test_case_12), will no longer fail when this is fixed.
+    NOTE: Test currently fails because an erronous issue is raised (see test_case_12/test_case_40), will no longer fail when this is fixed.
     """
     response = app.validate_request(basic_order_request, complete_parts)
 
     assert not response
 
-  
+  def test_case_40(self, complete_parts, basic_order_request):
+    """
+    Test changes the airplane_type of the basic order request to B737 to create an invalid order request as the part is for airplane_type A320
+    It then checks whether the validate_request function returns any issues.
+    Test passes if any issue has been raised.
+    """
+    basic_order_request.aircraft_type = "B737"
+    response = app.validate_request(basic_order_request, complete_parts)
+
+    assert response
