@@ -35,7 +35,7 @@ Maar dit is pas een eerste opzet en misschien niet de beste manier om dit aan te
 """
 
 import aeroparts_order_app as app
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytest
 
 
@@ -118,8 +118,29 @@ def complete_parts():
       hazmat = False, 
     ),
   } 
-
   return parts
+
+@pytest.fixture
+def basic_order_request():
+  """
+  Returns OrderRequest that should cause no issues:
+  - Part and aircraft type correspond
+  - Part doesnt need certificate and has no shelf life
+  - Only 1 needed
+  - routine priority
+  - needed_by far in the future
+  """
+  request = app.OrderRequest(
+    request_id = 1, 
+    part_no = "A-NC-NSL", 
+    aircraft_type="A320", 
+    quantity = 1,
+    priority = "ROUTINE",
+    requested_by = "Mechanic",
+    needed_by = datetime.now() + timedelta(days=30),
+    cost_center = "The cost center"
+  )
+  return request
 
 # A class to test the full system, so everything that happens when place_order is called
 class TestClassSystem:
