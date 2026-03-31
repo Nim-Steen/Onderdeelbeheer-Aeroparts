@@ -37,6 +37,7 @@ Maar dit is pas een eerste opzet en misschien niet de beste manier om dit aan te
 import aeroparts_order_app as app
 from datetime import datetime, timedelta
 import pytest
+import random
 
 
 @pytest.fixture
@@ -143,33 +144,33 @@ def basic_order_request():
   return request
 
 # A class to test the full system, so everything that happens when place_order is called
-class TestClassSystem:
+# class TestClassSystem:
 
-  @pytest.fixture
-  def complete_stock():
-    stock = [] # TODO insert List of app.StockItem with the items available in warehouses
-    return stock
+#   @pytest.fixture
+#   def complete_stock():
+#     stock = [] # TODO insert List of app.StockItem with the items available in warehouses
+#     return stock
   
-  @pytest.fixture
-  def complete_offers():
-    offers = [] # TODO insert List of app.SupplierOffer with the items that can be bought from suppliers
-    return offers
+#   @pytest.fixture
+#   def complete_offers():
+#     offers = [] # TODO insert List of app.SupplierOffer with the items that can be bought from suppliers
+#     return offers
 
   
   
-  def test_example(self, complete_parts, complete_stock, complete_offers):
-    """
-    Dit is een voorbeeld van een test van de functie place_order.
-    Vul op de eerste regel de variabelen in van de OrderRequest die je wilt testen, de input.
-    Maar eventueel een eigen parts/stock/offers lijst aan zoals relevant voor de test.
-    Roep de functie place_order op, en sla deze op in een variabele (hier 'response').
-    Schrijf een assert statement waar je de 'response' vergelijkt met de verwachte output.
-    """
-    request = app.OrderRequest("some id", "some no", "some type", 0, "prio", "requester", datetime.now(), "center") 
+#   def test_example(self, complete_parts, complete_stock, complete_offers):
+#     """
+#     Dit is een voorbeeld van een test van de functie place_order.
+#     Vul op de eerste regel de variabelen in van de OrderRequest die je wilt testen, de input.
+#     Maar eventueel een eigen parts/stock/offers lijst aan zoals relevant voor de test.
+#     Roep de functie place_order op, en sla deze op in een variabele (hier 'response').
+#     Schrijf een assert statement waar je de 'response' vergelijkt met de verwachte output.
+#     """
+#     request = app.OrderRequest("some id", "some no", "some type", 0, "prio", "requester", datetime.now(), "center") 
 
-    response = app.place_order(request, complete_parts, complete_stock, complete_offers)
+#     response = app.place_order(request, complete_parts, complete_stock, complete_offers)
     
-    assert "statement to test (probably from response?)" == "whatever you want to test"
+#     assert "statement to test (probably from response?)" == "whatever you want to test"
 
 
 
@@ -179,16 +180,44 @@ class TestClassSystem:
 class TestClassUnitValidateRequest:
   pass
 
-  def test_example(self, complete_parts):
-    """
-    Dit is een voorbeeld van een test van de functie validate_request.
-    Vul op de eerste regel de variabelen in van de OrderRequest die je wilt testen, de input.
-    Maar eventueel een eigen parts lijst aan zoals relevant voor de test.
-    Roep de functie validate_request op, en sla deze op in een variabele (hier 'response').
-    Schrijf een assert statement waar je de 'response' vergelijkt met de verwachte output.
-    """
-    request = app.OrderRequest("some id", "some no", "some type", 0, "prio", "requester", datetime.now(), "center")
+  # def test_example(self, complete_parts):
+  #   """
+  #   Dit is een voorbeeld van een test van de functie validate_request.
+  #   Vul op de eerste regel de variabelen in van de OrderRequest die je wilt testen, de input.
+  #   Maar eventueel een eigen parts lijst aan zoals relevant voor de test.
+  #   Roep de functie validate_request op, en sla deze op in een variabele (hier 'response').
+  #   Schrijf een assert statement waar je de 'response' vergelijkt met de verwachte output.
+  #   """
+  #   request = app.OrderRequest("some id", "some no", "some type", 0, "prio", "requester", datetime.now(), "center")
 
-    response = app.validate_request(request, complete_parts)
+  #   response = app.validate_request(request, complete_parts)
 
-    assert "statement to test (probably from response?)" == "whatever you want to test"
+  #   assert "statement to test (probably from response?)" == "whatever you want to test"
+
+# A class to test the method to_eur
+class TestClassUnitToEur:
+  pass
+
+  def test_case_44(self):
+    """
+    Test calls the to_eur function with a random amount between 1 and 1000 and the currency USD.
+    Test then compares the result to the intended result (amount * 0.92), each rounded to 3 decimals to avoid rounding errors
+    Test passes if the result is equal to the amount * 0.92
+    """
+    amount = random.randint(1,100000)/100
+    currency = "USD"
+    converted_amount = app.to_eur(amount, currency)
+
+    assert round(converted_amount, 3) == round(amount * 0.92, 3)
+
+  def test_case_47(self):
+    """
+    Test calls the to_eur function with a random amount between 1 and 1000 and the currency EUR.
+    Test then compares the result to the intended result (amount), each rounded to 3 decimals to avoid rounding errors
+    Test passes if the result is equal to the original amount. 
+    """
+    amount = random.randint(1,100000)/100
+    currency = "EUR"
+    converted_amount = app.to_eur(amount, currency)
+
+    assert round(converted_amount, 3) == round(amount, 3)
