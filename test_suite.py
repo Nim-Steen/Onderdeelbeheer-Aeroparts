@@ -201,7 +201,6 @@ class TestClassUnitValidateRequest:
     """
     basic_order_request.aircraft_type = "B737"
     response = app.validate_request(basic_order_request, complete_parts)
-    print(response)
 
     compatible = True
 
@@ -210,4 +209,18 @@ class TestClassUnitValidateRequest:
         compatible = False
 
     assert compatible == False
-    
+
+  def test_case_34(self, complete_parts, basic_order_request):
+    """
+    Test changes the requested quantity of the basic order request to -1, a negative number.
+    It then checks whether the validate_request function returns any issues.
+    Test passes if any issue has been raised.
+
+    NOTE: Test currently passes because an erronous issue is raised (see test_case_12), will no longer pass when this is fixed.
+    """
+    basic_order_request.quantity = -1
+    response = app.validate_request(basic_order_request, complete_parts)
+
+    assert response
+
+  
