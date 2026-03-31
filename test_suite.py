@@ -144,32 +144,32 @@ def basic_order_request():
 
 # A class to test the full system, so everything that happens when place_order is called
 class TestClassSystem:
-
-  @pytest.fixture
-  def complete_stock():
-    stock = [] # TODO insert List of app.StockItem with the items available in warehouses
-    return stock
+  pass
+  # @pytest.fixture
+  # def complete_stock():
+  #   stock = [] # TODO insert List of app.StockItem with the items available in warehouses
+  #   return stock
   
-  @pytest.fixture
-  def complete_offers():
-    offers = [] # TODO insert List of app.SupplierOffer with the items that can be bought from suppliers
-    return offers
+  # @pytest.fixture
+  # def complete_offers():
+  #   offers = [] # TODO insert List of app.SupplierOffer with the items that can be bought from suppliers
+  #   return offers
 
   
   
-  def test_example(self, complete_parts, complete_stock, complete_offers):
-    """
-    Dit is een voorbeeld van een test van de functie place_order.
-    Vul op de eerste regel de variabelen in van de OrderRequest die je wilt testen, de input.
-    Maar eventueel een eigen parts/stock/offers lijst aan zoals relevant voor de test.
-    Roep de functie place_order op, en sla deze op in een variabele (hier 'response').
-    Schrijf een assert statement waar je de 'response' vergelijkt met de verwachte output.
-    """
-    request = app.OrderRequest("some id", "some no", "some type", 0, "prio", "requester", datetime.now(), "center") 
+  # def test_example(self, complete_parts, complete_stock, complete_offers):
+  #   """
+  #   Dit is een voorbeeld van een test van de functie place_order.
+  #   Vul op de eerste regel de variabelen in van de OrderRequest die je wilt testen, de input.
+  #   Maar eventueel een eigen parts/stock/offers lijst aan zoals relevant voor de test.
+  #   Roep de functie place_order op, en sla deze op in een variabele (hier 'response').
+  #   Schrijf een assert statement waar je de 'response' vergelijkt met de verwachte output.
+  #   """
+  #   request = app.OrderRequest("some id", "some no", "some type", 0, "prio", "requester", datetime.now(), "center") 
 
-    response = app.place_order(request, complete_parts, complete_stock, complete_offers)
+  #   response = app.place_order(request, complete_parts, complete_stock, complete_offers)
     
-    assert "statement to test (probably from response?)" == "whatever you want to test"
+  #   assert "statement to test (probably from response?)" == "whatever you want to test"
 
 
 
@@ -179,16 +179,35 @@ class TestClassSystem:
 class TestClassUnitValidateRequest:
   pass
 
-  def test_example(self, complete_parts):
-    """
-    Dit is een voorbeeld van een test van de functie validate_request.
-    Vul op de eerste regel de variabelen in van de OrderRequest die je wilt testen, de input.
-    Maar eventueel een eigen parts lijst aan zoals relevant voor de test.
-    Roep de functie validate_request op, en sla deze op in een variabele (hier 'response').
-    Schrijf een assert statement waar je de 'response' vergelijkt met de verwachte output.
-    """
-    request = app.OrderRequest("some id", "some no", "some type", 0, "prio", "requester", datetime.now(), "center")
+  # def test_example(self, complete_parts):
+  #   """
+  #   Dit is een voorbeeld van een test van de functie validate_request.
+  #   Vul op de eerste regel de variabelen in van de OrderRequest die je wilt testen, de input.
+  #   Maar eventueel een eigen parts lijst aan zoals relevant voor de test.
+  #   Roep de functie validate_request op, en sla deze op in een variabele (hier 'response').
+  #   Schrijf een assert statement waar je de 'response' vergelijkt met de verwachte output.
+  #   """
+  #   request = app.OrderRequest("some id", "some no", "some type", 0, "prio", "requester", datetime.now(), "center")
 
-    response = app.validate_request(request, complete_parts)
+  #   response = app.validate_request(request, complete_parts)
 
-    assert "statement to test (probably from response?)" == "whatever you want to test"
+  #   assert "statement to test (probably from response?)" == "whatever you want to test"
+
+  def test_case_12(self, complete_parts, basic_order_request):
+    """
+    Test changes the airplane_type of the basic order request to B737 to create an invalid order request as the part is for airplane_type A320
+    It then checks all issues raised by validate_request and sets compatible to False if an issue contains "not compatible"
+    Test passes if compatible has been set to False
+    """
+    basic_order_request.aircraft_type = "B737"
+    response = app.validate_request(basic_order_request, complete_parts)
+    print(response)
+
+    compatible = True
+
+    for issue in response:
+      if "not compatible" in issue:
+        compatible = False
+
+    assert compatible == False
+    
