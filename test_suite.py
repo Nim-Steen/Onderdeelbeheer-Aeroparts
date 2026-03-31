@@ -223,4 +223,28 @@ class TestClassUnitValidateRequest:
 
     assert response
 
+  def test_case_36(self, complete_parts, basic_order_request):
+    """
+    Test changes the requested quantity of the basic order request to 0.5, a fractional number.
+    It then checks whether the validate_request function returns any issues.
+    Test passes if any issue has been raised.
+
+    NOTE: Test currently passes because an erronous issue is raised (see test_case_12), will no longer pass when this is fixed.
+    """
+    basic_order_request.quantity = 0.5
+    response = app.validate_request(basic_order_request, complete_parts)
+
+    assert response
+
+  def test_case_38(self, complete_parts, basic_order_request):
+    """
+    Test checks whether the validate_request function returns any issues with the default parts and order request.
+    Test passes if no issue has been raised.
+
+    NOTE: Test currently fails because an erronous issue is raised (see test_case_12), will no longer fail when this is fixed.
+    """
+    response = app.validate_request(basic_order_request, complete_parts)
+
+    assert not response
+
   
