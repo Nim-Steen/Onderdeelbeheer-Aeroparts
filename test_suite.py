@@ -144,6 +144,38 @@ def basic_order_request():
   return request
 
 @pytest.fixture
+def cert_request(basic_order_request):
+  """
+  Returns the basic_order_request above, but for the part that does need certification
+  """
+  basic_order_request.part_no = "A-C-NSL"
+  return basic_order_request
+
+@pytest.fixture
+def low_needed_by_request(basic_order_request):
+  """
+  Returns the basic_order_request above, but with needed_by in 30 minutes
+  """
+  basic_order_request.needed_by = datetime.now(UTC) + timedelta(minutes = 30)
+  return basic_order_request
+
+@pytest.fixture
+def shelf_life_request(basic_order_request):
+  """
+  Returns the basic_order_request above, but with an item with shelf life
+  """
+  basic_order_request.part_no = "A-NC-SL"
+  return basic_order_request
+
+@pytest.fixture
+def incompatible_request(basic_order_request):
+  """
+  Returns the basic_order_request above, but for the other plane (incompatible with the part)
+  """
+  basic_order_request.aircraft_type = "B737"
+  return basic_order_request
+
+@pytest.fixture
 def AOG_request(basic_order_request):
   """
   Returns the basic_order_request above, but with priority changed to "AOG"
@@ -176,10 +208,20 @@ def complete_AMS_stock(complete_parts):
       on_hand = random.randint(10,1000),
       reserved = 0,
       safety_stock = 0,
-      expires_on = datetime.now() + timedelta(days=part.shelf_life_days) if part.shelf_life_days else None
+      expires_on = datetime.now(UTC) + timedelta(days=part.shelf_life_days) if part.shelf_life_days else None
     )
     stock.append(stock_item)
   return stock
+
+@pytest.fixture
+def complete_expired_AMS_stock(complete_AMS_stock):
+  """
+  Returns default stock with expires_on set to yesterday
+  """
+  for stock in complete_AMS_stock:
+    if stock.expires_on:
+      stock.expires_on = datetime.now(UTC) - timedelta(days = 1)
+  return complete_AMS_stock
 
 @pytest.fixture
 def no_AOG_AMS_stock(complete_AMS_stock, AOG_request):
@@ -238,6 +280,15 @@ def complete_offers(complete_parts):
   return offers
 
 @pytest.fixture
+def complete_no_cert_offers(complete_offers):
+  """
+  Returns list of offers but with certified = False so it can't match the certification requirement
+  """
+  for supplier_offer in complete_offers:
+    supplier_offer.certified = False
+  return complete_offers
+
+@pytest.fixture
 def complete_no_AOG_offers(complete_offers):
   """
   Returns list of offers but with the lead_time_days increased so it can't match the AOG deadline
@@ -257,7 +308,83 @@ def complete_no_urgent_offers(complete_offers):
 
 
 # A class to test the full system, so everything that happens when place_order is called
-class TestClassSystem:  
+class TestClassSystem:
+  def test_case_6(self, cert_request, complete_parts, complete_no_cert_offers):
+    """
+    Test calls the place_order function with a request requiring certification, a complete dictionary of parts, empty stock and offers without certification.
+    It then checks all notes in the resulting OrderResult and sets certified to False if a note contains "certif" 
+    (so it tests for "certified", "certification", "certificate", etc)
+
+    Test passes if certified has been set to False
+    """
+    result = app.place_order(cert_request, complete_parts, [], complete_no_cert_offers)
+
+    certified = True
+
+    for note in result.notes:
+      if "certif" in note:
+        certified = False
+        break
+    
+    assert not certified
+
+
+  def test_case_9(self, low_needed_by_request, complete_parts, no_AOG_AMS_stock, complete_no_AOG_offers):
+    """
+    Test calls the place_order function with a request with 30 minute needed_by, a complete dictionary of parts, stock with ETA > 1hr and offers with lead_time of 4 days.
+    It then checks all notes in the resulting OrderResult and sets in_time to False if a note contains "needed_by" 
+
+    Test passes if in_time has been set to False
+    """
+    result = app.place_order(low_needed_by_request, complete_parts, no_AOG_AMS_stock, complete_no_AOG_offers)
+
+    in_time = True
+
+    for note in result.notes:
+      if "needed_by" in note:
+        in_time = False
+        break
+
+    assert not in_time
+
+  def test_case_11(self, low_needed_by_request, complete_parts, complete_expired_AMS_stock):
+    """
+    Test calls the place_order function with a request for an item with shelf_life, a complete dictionary of parts, stock with only expired parts and no offers.
+    It then checks all notes in the resulting OrderResult and sets expired to True if a note contains "expire" 
+
+    Test passes if expired has been set to True
+    """
+    result = app.place_order(low_needed_by_request, complete_parts, complete_expired_AMS_stock, [])
+
+    expired = False
+
+    for note in result.notes:
+      if "expire" in note:
+        expired = True
+        break
+
+    assert expired
+
+
+  def test_case_13(self, incompatible_request, complete_parts, complete_AMS_stock, complete_offers):
+    """
+    Test calls the place_order function with a request for an item for a different plane, a complete dictionary of parts, and complete stock and offers.
+    It then checks all notes in the resulting OrderResult and sets compatible to False if a note contains "not compatible" 
+
+    Test passes if compatible has been set to False
+    """
+    result = app.place_order(incompatible_request, complete_parts, complete_AMS_stock, complete_offers)
+
+    compatible = True
+
+    for note in result.notes:
+      if "not compatible" in note:
+        compatible = False
+        break
+
+    assert not compatible
+
+
   def test_case_25(self, AOG_request, complete_parts, no_AOG_AMS_stock, complete_no_AOG_offers):
     """
     Test calls the place_order function with an AOG request, a complete dictionary of parts, and stock and offers that cannot meet the AOG-eta requirement.
