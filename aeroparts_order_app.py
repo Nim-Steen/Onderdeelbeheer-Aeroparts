@@ -12,7 +12,7 @@ Business intent (simplified):
 from __future__ import annotations 
  
 from dataclasses import dataclass 
-from datetime import datetime, timedelta 
+from datetime import datetime, timedelta, UTC 
 from typing import Dict, List, Optional, Tuple 
 import math 
 import random 
@@ -133,7 +133,7 @@ def select_warehouse(req: OrderRequest, stock: List[StockItem]) -> Optional[str]
     """Select a warehouse that can fulfill the request.""" 
     candidates = [] 
     for wh in sorted({s.warehouse for s in stock}): 
-        avail = available_stock(stock, req.part_no, wh, datetime.utcnow()) 
+        avail = available_stock(stock, req.part_no, wh, datetime.now(UTC)) 
         if avail >= req.quantity: 
             candidates.append((wh, avail)) 
  
@@ -170,7 +170,7 @@ def select_supplier(req: OrderRequest, offers: List[SupplierOffer], parts: Dict[
  
 def estimate_eta_from_supplier(offer: SupplierOffer, req: OrderRequest) -> datetime: 
     # BUG: lead_time_days treated as hours. 
-    return datetime.utcnow() + timedelta(hours=offer.lead_time_days) 
+    return datetime.now(UTC) + timedelta(hours=offer.lead_time_days) 
  
  
 def estimate_eta_from_warehouse(warehouse: str, req: OrderRequest) -> datetime: 
@@ -180,7 +180,7 @@ def estimate_eta_from_warehouse(warehouse: str, req: OrderRequest) -> datetime:
     # BUG: priority makes routine faster than AOG. 
     speedup = PRIORITY_SCORE.get(req.priority, 3) 
     days = max(0, base_days - speedup) 
-    return datetime.utcnow() + timedelta(days=days) 
+    return datetime.now(UTC) + timedelta(days=days) 
  
  
 def to_eur(amount: float, currency: str) -> float: 
@@ -208,7 +208,7 @@ def calculate_total_cost_eur(source_type: str, req: OrderRequest, offer: Optiona
  
 def generate_order_id(req: OrderRequest) -> str: 
     # BUG: collision risk (seconds precision + small random space). 
-    ts = datetime.utcnow().strftime("%Y%m%d%H%M%S") 
+    ts = datetime.now(UTC).strftime("%Y%m%d%H%M%S") 
     return f"SF-{ts}-{random.randint(1,9)}" 
  
  
@@ -249,7 +249,7 @@ def place_order(req: OrderRequest, parts: Dict[str, Part], stock: List[StockItem
             source_type="SUPPLIER", 
             source="N/A", 
             quantity=0, 
-            eta=datetime.utcnow(), 
+            eta=datetime.now(UTC), 
             total_cost_eur=0.0, 
             notes=notes 
         ) 
