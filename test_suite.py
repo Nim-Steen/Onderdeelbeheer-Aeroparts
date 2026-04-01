@@ -35,7 +35,7 @@ Maar dit is pas een eerste opzet en misschien niet de beste manier om dit aan te
 """
 
 import aeroparts_order_app as app
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import pytest
 import random
 
@@ -138,10 +138,18 @@ def basic_order_request():
     quantity = 1,
     priority = "ROUTINE",
     requested_by = "Mechanic",
-    needed_by = datetime.now() + timedelta(days=30),
+    needed_by = datetime.now(UTC) + timedelta(days=30),
     cost_center = "The cost center"
   )
   return request
+
+@pytest.fixture
+def AOG_request(basic_order_request):
+  """
+  Returns the basic_order_request above, but with priority changed to "AOG"
+  """
+  basic_order_request.priority = "AOG"
+  return basic_order_request
 
 @pytest.fixture
 def complete_AMS_stock(complete_parts):
@@ -164,6 +172,17 @@ def complete_AMS_stock(complete_parts):
     )
     stock.append(stock_item)
   return stock
+
+@pytest.fixture
+def no_AOG_AMS_stock(complete_AMS_stock, AOG_request):
+  """
+  Returns default stock with the items for AOG_request removed to force having no supply within AOG.
+  """
+  for stock_item in complete_AMS_stock:
+      if (stock_item.part_no ==  AOG_request.part_no and 
+          app.estimate_eta_from_warehouse(stock_item.warehouse, AOG_request) < datetime.now(UTC) + timedelta(hours = 1)):
+        complete_AMS_stock.remove(stock_item)
+  return complete_AMS_stock
   
 @pytest.fixture
 def complete_offers(complete_parts):
@@ -172,7 +191,7 @@ def complete_offers(complete_parts):
   - 2 items for each item in complete_parts
   - a EUR and a USD version for each item
   - unit price randomized between 1 and 1000
-  - lead_time randomized between 0 and 3 days
+  - lead_time of 0 for EUR supplier, and 2 for USD supplier
   - all certified
   
   A lot here is randomized, make sure to change values or add a whole SupplierOffer if you need specific values
@@ -184,7 +203,7 @@ def complete_offers(complete_parts):
       part_no = part.part_no,
       unit_price = random.randint(100, 100000)/100,
       currency = "EUR",
-      lead_time_days = random.randint(0,3),
+      lead_time_days = 0,
       certified = True
     )
     supplier_offer_usd = app.SupplierOffer(
@@ -192,45 +211,73 @@ def complete_offers(complete_parts):
       part_no = part.part_no,
       unit_price = random.randint(100, 100000)/100,
       currency = "USD",
-      lead_time_days = random.randint(0,3),
+      lead_time_days = 2,
       certified = True
     )
     offers.append(supplier_offer_eur)
     offers.append(supplier_offer_usd)
   return offers
 
+@pytest.fixture
+def complete_no_AOG_offers(complete_offers):
+  """
+  Returns list of offers but with the lead_time_days increased so it can't match the AOG deadline
+  """
+  for supplier_offer in complete_offers:
+    supplier_offer.lead_time_days = 4
+  return complete_offers
+
+
 # A class to test the full system, so everything that happens when place_order is called
 class TestClassSystem:  
-  def test_example(self, complete_parts, complete_AMS_stock, complete_offers):
+  def test_case_25(self, AOG_request, complete_parts, no_AOG_AMS_stock, complete_no_AOG_offers):
     """
-    Dit is een voorbeeld van een test van de functie place_order.
-    Vul op de eerste regel de variabelen in van de OrderRequest die je wilt testen, de input.
-    Maar eventueel een eigen parts/stock/offers lijst aan zoals relevant voor de test.
-    Roep de functie place_order op, en sla deze op in een variabele (hier 'response').
-    Schrijf een assert statement waar je de 'response' vergelijkt met de verwachte output.
+    Test calls the place_order function with an AOG request, a complete dictionary of parts, and stock and offers that cannot meet the AOG-eta requirement.
+    Test passes if no order is placed.
     """
-    request = app.OrderRequest("some id", "some no", "some type", 0, "prio", "requester", datetime.now(), "center") 
+    result = app.place_order(AOG_request, complete_parts, no_AOG_AMS_stock, complete_no_AOG_offers)
 
-    response = app.place_order(request, complete_parts, complete_AMS_stock, complete_offers)
-    
-    assert "statement to test (probably from response?)" == "whatever you want to test"
+    assert not result
+
+
+  def test_case_26(self, AOG_request, complete_parts, complete_AMS_stock, complete_no_AOG_offers):
+    """
+    Test calls the place_order function with an AOG request, a complete dictionary of parts, stock that can meet the AOG-eta requirement and offers that cannot.
+    Test passes if the order placed has an eta within 1 hour.
+    """
+    result = app.place_order(AOG_request, complete_parts, complete_AMS_stock, complete_no_AOG_offers)
+
+    assert result.eta < datetime.now(UTC) + timedelta(hours=1)
+
+
+  def test_case_27(self, AOG_request, complete_parts, no_AOG_AMS_stock, complete_offers):
+    """
+    Test calls the place_order function with an AOG request, a complete dictionary of parts, offers that can meet the AOG-eta requirement and stock that cannot.
+    Test passes if the order placed has an eta within 1 hour.
+
+    Test currently passes/fails depending on the price of offers.
+    """
+    result = app.place_order(AOG_request, complete_parts, no_AOG_AMS_stock, complete_offers)
+
+    assert result.eta < datetime.now(UTC) + timedelta(hours=1)
+        
 
 
 
 
 
 # A class to test the method validate_request
-class TestClassUnitValidateRequest:
-  def test_example(self, complete_parts):
-    """
-    Dit is een voorbeeld van een test van de functie validate_request.
-    Vul op de eerste regel de variabelen in van de OrderRequest die je wilt testen, de input.
-    Maar eventueel een eigen parts lijst aan zoals relevant voor de test.
-    Roep de functie validate_request op, en sla deze op in een variabele (hier 'response').
-    Schrijf een assert statement waar je de 'response' vergelijkt met de verwachte output.
-    """
-    request = app.OrderRequest("some id", "some no", "some type", 0, "prio", "requester", datetime.now(), "center")
+# class TestClassUnitValidateRequest:
+#   def test_example(self, complete_parts):
+#     """
+#     Dit is een voorbeeld van een test van de functie validate_request.
+#     Vul op de eerste regel de variabelen in van de OrderRequest die je wilt testen, de input.
+#     Maar eventueel een eigen parts lijst aan zoals relevant voor de test.
+#     Roep de functie validate_request op, en sla deze op in een variabele (hier 'response').
+#     Schrijf een assert statement waar je de 'response' vergelijkt met de verwachte output.
+#     """
+#     request = app.OrderRequest("some id", "some no", "some type", 0, "prio", "requester", datetime.now(), "center")
 
-    response = app.validate_request(request, complete_parts)
+#     response = app.validate_request(request, complete_parts)
 
-    assert "statement to test (probably from response?)" == "whatever you want to test"
+#     assert "statement to test (probably from response?)" == "whatever you want to test"
