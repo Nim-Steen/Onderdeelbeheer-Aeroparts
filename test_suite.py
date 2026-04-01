@@ -4,6 +4,13 @@ PREREQUISITE: typ het volgende in terminal: (dit hoeft alleen de eerste keer)
 
 Om tests uit te voeren, typ het volgende in terminal: 
   python -m pytest
+
+Om een specifieke test, of test class, uit te voeren, kun je een deel selecteren:
+  python -m pytest test_suite.py::[naam van class]                              Voor de hele class
+  python -m pytest test_suite.py::[naam van class]::[naam van test]             Voor een specifieke test
+
+Bijvoorbeeld:
+ python -m pytest pytest test_suite.py::TestClassSystem::test_case_46
 ______________________________________________________________________________________________________
 
 In dit bestand staan tests (functies beginnende met 'test') verdeeld in test classes (classes beginnende met Test). 
@@ -38,6 +45,7 @@ import aeroparts_order_app as app
 from datetime import datetime, timedelta, UTC
 import pytest
 import random
+import math
 
 
 @pytest.fixture
@@ -306,6 +314,17 @@ def complete_no_urgent_offers(complete_offers):
     supplier_offer.lead_time_days = 10
   return complete_offers
 
+@pytest.fixture
+def only_USD_offers(complete_offers):
+  """
+  Returns list of offers but with "EUR" offers removed
+  """
+  for supplier_offer in complete_offers:
+    if supplier_offer == "EUR":
+        complete_offers.remove(supplier_offer)
+  return complete_offers
+
+
 
 # A class to test the full system, so everything that happens when place_order is called
 class TestClassSystem:
@@ -383,6 +402,29 @@ class TestClassSystem:
         break
 
     assert not compatible
+
+
+  def test_case_24(self, basic_order_request, complete_parts, complete_AMS_stock):
+    """
+    Test notes the amount in stock of the requested item in the variable original_amount
+    Then it runs the place_order function, and logs the stock of the requested item in the variable new_amount
+
+    Test passes if the new_amount is equal to the original_amount minus the requested amount.
+    """
+    for item in complete_AMS_stock:
+      if item.part_no == basic_order_request.part_no:
+        original_amount = item.on_hand
+        break
+
+    app.place_order(basic_order_request, complete_parts, complete_AMS_stock, [])
+
+    for item in complete_AMS_stock:
+      if item.part_no == basic_order_request.part_no:
+        new_amount = item.on_hand
+        break
+    
+    assert new_amount == original_amount - basic_order_request.quantity
+
 
 
   def test_case_25(self, AOG_request, complete_parts, no_AOG_AMS_stock, complete_no_AOG_offers):
@@ -475,6 +517,27 @@ class TestClassSystem:
     result = app.place_order(basic_order_request, complete_parts, no_urgent_AMS_stock, complete_offers)
 
     assert result
+
+
+  def test_case_46(self, basic_order_request, complete_parts, only_USD_offers):
+    """
+    Test notes the cost of the item from the supplier and stores it as price_per_item
+    Then it calculates the intended cost by multiplying by the exchange rate and the requested quantity
+    Then it runs the place_order function.
+
+    Test passes if the intended_cost is equal to the total_cost_eur in the result from place_order, both rounded to 3 decimals to avoid rounding errors
+    """
+    for item in only_USD_offers:
+      if item.part_no == basic_order_request.part_no:
+        price_per_item = item.unit_price
+        break
+
+    unit_cost_eur = price_per_item * app.FX_RATES_TO_EUR["USD"]
+    intended_cost = unit_cost_eur * basic_order_request.quantity
+
+    result = app.place_order(basic_order_request, complete_parts, [], only_USD_offers)
+
+    assert round(result.total_cost_eur,3) == round(intended_cost, 3)
 
 
 
