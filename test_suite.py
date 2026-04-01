@@ -200,6 +200,22 @@ def urgent_request(basic_order_request):
   return basic_order_request
 
 @pytest.fixture
+def negative_request(basic_order_request):
+  """
+  Returns the basic_order_request above, but with quantity changed to -1
+  """
+  basic_order_request.quantity = -1
+  return basic_order_request
+
+@pytest.fixture
+def fractional_request(basic_order_request):
+  """
+  Returns the basic_order_request above, but with quantity changed to 0.5
+  """
+  basic_order_request.quantity = 0.5
+  return basic_order_request
+
+@pytest.fixture
 def complete_AMS_stock(complete_parts):
   """
   Returns list of StockItems that should cause no issues:
@@ -517,6 +533,33 @@ class TestClassSystem:
     result = app.place_order(basic_order_request, complete_parts, no_urgent_AMS_stock, complete_offers)
 
     assert result
+
+  def test_case_35(self, negative_request, complete_parts, complete_AMS_stock, complete_offers):
+    """
+    Test calls the place_order function with a request with a negative quantity, a complete dictionary of parts, and a complete stock and offers.
+    Test passes if any Exception is raised.
+    """
+    with pytest.raises(Exception):
+      app.place_order(negative_request, complete_parts, complete_AMS_stock, complete_offers)
+
+  def test_case_37(self, fractional_request, complete_parts, complete_AMS_stock, complete_offers):
+    """
+    Test calls the place_order function with a request with a fractional quantity, a complete dictionary of parts, and a complete stock and offers.
+    Test passes if any Exception is raised.
+    """
+    with pytest.raises(Exception):
+      app.place_order(fractional_request, complete_parts, complete_AMS_stock, complete_offers)
+
+
+  def test_case_41(self, incompatible_request, complete_parts, complete_AMS_stock, complete_offers):
+    """
+    Test calls the place_order function with a request with an incompatible part, a complete dictionary of parts, and a complete stock and offers.
+    Test passes if any Exception is raised.
+    """
+    with pytest.raises(Exception):
+      app.place_order(incompatible_request, complete_parts, complete_AMS_stock, complete_offers)
+
+
 
 
   def test_case_46(self, basic_order_request, complete_parts, only_USD_offers):
