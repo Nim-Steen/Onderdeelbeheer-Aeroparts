@@ -152,6 +152,14 @@ def AOG_request(basic_order_request):
   return basic_order_request
 
 @pytest.fixture
+def urgent_request(basic_order_request):
+  """
+  Returns the basic_order_request above, but with priority changed to "URGENT"
+  """
+  basic_order_request.priority = "URGENT"
+  return basic_order_request
+
+@pytest.fixture
 def complete_AMS_stock(complete_parts):
   """
   Returns list of StockItems that should cause no issues:
@@ -183,6 +191,17 @@ def no_AOG_AMS_stock(complete_AMS_stock, AOG_request):
           app.estimate_eta_from_warehouse(stock_item.warehouse, AOG_request) < datetime.now(UTC) + timedelta(hours = 1)):
         complete_AMS_stock.remove(stock_item)
   return complete_AMS_stock
+
+@pytest.fixture
+def no_urgent_AMS_stock(complete_AMS_stock, urgent_request):
+  """
+  Returns default stock with the items for urgent_request removed to force having no supply within urgent.
+  """
+  for stock_item in complete_AMS_stock:
+      if (stock_item.part_no ==  urgent_request.part_no and 
+          app.estimate_eta_from_warehouse(stock_item.warehouse, urgent_request) < datetime.now(UTC) + timedelta(days = 5)):
+        complete_AMS_stock.remove(stock_item)
+  return complete_AMS_stock
   
 @pytest.fixture
 def complete_offers(complete_parts):
@@ -191,7 +210,7 @@ def complete_offers(complete_parts):
   - 2 items for each item in complete_parts
   - a EUR and a USD version for each item
   - unit price randomized between 1 and 1000
-  - lead_time of 0 for EUR supplier, and 2 for USD supplier
+  - lead_time of 0 for EUR supplier, and 6 for USD supplier
   - all certified
   
   A lot here is randomized, make sure to change values or add a whole SupplierOffer if you need specific values
@@ -211,7 +230,7 @@ def complete_offers(complete_parts):
       part_no = part.part_no,
       unit_price = random.randint(100, 100000)/100,
       currency = "USD",
-      lead_time_days = 2,
+      lead_time_days = 6,
       certified = True
     )
     offers.append(supplier_offer_eur)
@@ -225,6 +244,15 @@ def complete_no_AOG_offers(complete_offers):
   """
   for supplier_offer in complete_offers:
     supplier_offer.lead_time_days = 4
+  return complete_offers
+
+@pytest.fixture
+def complete_no_urgent_offers(complete_offers):
+  """
+  Returns list of offers but with the lead_time_days increased so it can't match the urgent deadline
+  """
+  for supplier_offer in complete_offers:
+    supplier_offer.lead_time_days = 10
   return complete_offers
 
 
@@ -260,8 +288,66 @@ class TestClassSystem:
     result = app.place_order(AOG_request, complete_parts, no_AOG_AMS_stock, complete_offers)
 
     assert result.eta < datetime.now(UTC) + timedelta(hours=1)
+
+
+  def test_case_28(self, urgent_request, complete_parts, no_urgent_AMS_stock, complete_no_urgent_offers):
+    """
+    Test calls the place_order function with an urgent request, a complete dictionary of parts, and stock and offers that cannot meet the urgent-eta requirement.
+    Test passes if no order is placed.
+    """
+    result = app.place_order(urgent_request, complete_parts, no_urgent_AMS_stock, complete_no_urgent_offers)
+
+    assert not result
+
+
+  def test_case_29(self, urgent_request, complete_parts, complete_AMS_stock, complete_no_urgent_offers):
+    """
+    Test calls the place_order function with an urgent request, a complete dictionary of parts, stock that can meet the urgent-eta requirement and offers that cannot.
+    Test passes if the order placed has an eta within 5 days.
+    """
+    result = app.place_order(urgent_request, complete_parts, complete_AMS_stock, complete_no_urgent_offers)
+
+    assert result.eta < datetime.now(UTC) + timedelta(days=5)
+
+
+  def test_case_30(self, urgent_request, complete_parts, no_urgent_AMS_stock, complete_offers):
+    """
+    Test calls the place_order function with an urgent request, a complete dictionary of parts, offers that can meet the urgent-eta requirement and stock that cannot.
+    Test passes if the order placed has an eta within 5 days.
+    """
+    result = app.place_order(urgent_request, complete_parts, no_urgent_AMS_stock, complete_offers)
+
+    assert result.eta < datetime.now(UTC) + timedelta(days=5)
         
 
+  def test_case_31(self, basic_order_request, complete_parts, no_urgent_AMS_stock, complete_no_urgent_offers):
+    """
+    Test calls the place_order function with a routine request, a complete dictionary of parts, and stock and offers that cannot meet the urgent-eta requirement.
+    Test passes if an order is placed.
+    """
+    result = app.place_order(basic_order_request, complete_parts, no_urgent_AMS_stock, complete_no_urgent_offers)
+
+    assert result
+
+
+  def test_case_32(self, basic_order_request, complete_parts, complete_AMS_stock, complete_no_urgent_offers):
+    """
+    Test calls the place_order function with an routine request, a complete dictionary of parts, stock that can meet the urgent-eta requirement and offers that cannot.
+    Test passes if an order is placed.
+    """
+    result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, complete_no_urgent_offers)
+
+    assert result
+
+
+  def test_case_33(self, basic_order_request, complete_parts, no_urgent_AMS_stock, complete_offers):
+    """
+    Test calls the place_order function with an routine request, a complete dictionary of parts, offers that can meet the urgent-eta requirement and stock that cannot.
+    Test passes if an order is placed.
+    """
+    result = app.place_order(basic_order_request, complete_parts, no_urgent_AMS_stock, complete_offers)
+
+    assert result
 
 
 
