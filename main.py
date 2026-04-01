@@ -164,10 +164,11 @@ def get_user_input():
   )
   return request
 
-"""
-Function to print the request info for troubleshooting. Not currently used.
-"""
+
 def print_request_info(request):
+  """
+  Function to print the request info for troubleshooting. Not currently used.
+  """
   print("--------------------------------------------------------------------------------")
   print(f"request_id: {request.request_id}")
   print(f"part_no: {request.part_no}")
@@ -179,10 +180,11 @@ def print_request_info(request):
   print(f"cost_center: {request.cost_center}")
   print("--------------------------------------------------------------------------------")
 
-"""
-Function to print the final order info at the end of the process.
-"""
+
 def print_order_info(response):
+  """
+  Function to print the final order info at the end of the process.
+  """
   print("--------------------------------------------------------------------------------")
   print(f"order_id: {response.order_id}")
   print(f"source_type: {response.source_type}")
