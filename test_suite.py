@@ -10,7 +10,7 @@ Om een specifieke test, of test class, uit te voeren, kun je een deel selecteren
   python -m pytest test_suite.py::[naam van class]::[naam van test]             Voor een specifieke test
 
 Bijvoorbeeld:
- python -m pytest pytest test_suite.py::TestClassSystem::test_case_46
+ python -m pytest test_suite.py::TestClassSystem::test_case_46
 ______________________________________________________________________________________________________
 
 In dit bestand staan tests (functies beginnende met 'test') verdeeld in test classes (classes beginnende met Test). 
@@ -135,7 +135,7 @@ def basic_order_request():
   Returns OrderRequest that should cause no issues:
   - Part and aircraft type correspond
   - Part doesnt need certificate and has no shelf life
-  - Only 1 needed
+  - Between 1 and 9 needed
   - routine priority
   - needed_by far in the future
   """
@@ -143,7 +143,7 @@ def basic_order_request():
     request_id = 1, 
     part_no = "A-NC-NSL", 
     aircraft_type="A320", 
-    quantity = 1,
+    quantity = random.randint(1,9),
     priority = "ROUTINE",
     requested_by = "Mechanic",
     needed_by = datetime.now(UTC) + timedelta(days=30),
@@ -340,6 +340,16 @@ def only_USD_offers(complete_offers):
         complete_offers.remove(supplier_offer)
   return complete_offers
 
+@pytest.fixture
+def only_EUR_offers(complete_offers):
+  """
+  Returns list of offers but with "USD" offers removed
+  """
+  for supplier_offer in complete_offers:
+    if supplier_offer == "USD":
+        complete_offers.remove(supplier_offer)
+  return complete_offers
+
 
 
 # A class to test the full system, so everything that happens when place_order is called
@@ -418,6 +428,32 @@ class TestClassSystem:
         break
 
     assert not compatible
+
+
+  def test_case_14(self, basic_order_request, complete_parts, complete_AMS_stock, complete_offers):
+    """
+    Test calls the place_order function with a request for an item without issues, a complete dictionary of parts, and complete stock and offers.
+    It then checks whether there are notes in the resulting OrderResult.
+
+    Test passes if there are no notes.
+    """
+    result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, complete_offers)
+
+    assert not result.notes
+
+
+  def test_case_20(self, basic_order_request, complete_parts, complete_offers):
+    """
+    Test calls the place_order function with a request for an item without issues, a complete dictionary of parts, complete offers (which contains 2 offers for the part) and empty stock.
+    It then checks whether more than one option is returned.
+    It assumes an array of options is returned and checks the length.
+
+    Test passes if the result is an array and more than one option is returned.
+    """
+    result = app.place_order(basic_order_request, complete_parts, [], complete_offers)
+
+    assert len(result) > 1
+
 
 
   def test_case_24(self, basic_order_request, complete_parts, complete_AMS_stock):
@@ -542,6 +578,7 @@ class TestClassSystem:
     with pytest.raises(Exception):
       app.place_order(negative_request, complete_parts, complete_AMS_stock, complete_offers)
 
+
   def test_case_37(self, fractional_request, complete_parts, complete_AMS_stock, complete_offers):
     """
     Test calls the place_order function with a request with a fractional quantity, a complete dictionary of parts, and a complete stock and offers.
@@ -549,6 +586,16 @@ class TestClassSystem:
     """
     with pytest.raises(Exception):
       app.place_order(fractional_request, complete_parts, complete_AMS_stock, complete_offers)
+
+
+  def test_case_39(self, basic_order_request, complete_parts, complete_AMS_stock, complete_offers):
+    """
+    Test calls the place_order function with a request with a positive, whole quantity, a complete dictionary of parts, and a complete stock and offers.
+    Test passes if an order is returned.
+    """
+    result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, complete_offers)
+
+    assert result
 
 
   def test_case_41(self, incompatible_request, complete_parts, complete_AMS_stock, complete_offers):
@@ -560,6 +607,14 @@ class TestClassSystem:
       app.place_order(incompatible_request, complete_parts, complete_AMS_stock, complete_offers)
 
 
+  def test_case_43(self, basic_order_request, complete_parts, complete_AMS_stock, complete_offers):
+    """
+    Test calls the place_order function with a request with a compatible part, a complete dictionary of parts, and a complete stock and offers.
+    Test passes if an order is returned.
+    """
+    result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, complete_offers)
+
+    assert result
 
 
   def test_case_46(self, basic_order_request, complete_parts, only_USD_offers):
@@ -581,6 +636,83 @@ class TestClassSystem:
     result = app.place_order(basic_order_request, complete_parts, [], only_USD_offers)
 
     assert round(result.total_cost_eur,3) == round(intended_cost, 3)
+
+
+  def test_case_49(self, basic_order_request, complete_parts, only_EUR_offers):
+    """
+    Test notes the cost of the item from the supplier and stores it as price_per_item
+    Then it calculates the intended cost by multiplying the price_per_item by the requested quantity
+    Then it runs the place_order function.
+
+    Test passes if the intended_cost is equal to the total_cost_eur in the result from place_order, both rounded to 3 decimals to avoid rounding errors
+    """
+    for item in only_EUR_offers:
+      if item.part_no == basic_order_request.part_no:
+        price_per_item = item.unit_price
+        break
+
+    intended_cost = price_per_item * basic_order_request.quantity
+
+    result = app.place_order(basic_order_request, complete_parts, [], only_EUR_offers)
+
+    assert round(result.total_cost_eur,3) == round(intended_cost, 3)
+
+  
+  def test_case_51(self, basic_order_request, complete_parts, complete_AMS_stock, complete_offers):
+    """
+    Test creates up to 20 orders. 
+    After each order, the order_id is checked against a list of order_ids, and added to the list if it's not yet in there.
+    If the order_id is already in the list, duplicate_id is set to True and the loop ends.
+
+    The test passes if duplicate_id is not set to True. 
+    """
+    order_ids = []
+    duplicate_id = False
+    for i in range(20):
+      result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, complete_offers)
+      if result.order_id not in order_ids:
+        order_ids.append(result.order_id)
+      else:
+        duplicate_id = True
+        break
+
+    assert not duplicate_id
+
+  def test_case_53(self, basic_order_request, complete_parts, complete_AMS_stock):
+    """
+    Test multiplies the requested quantity by the internal handling cost (15.0).
+    Then it runs the place_order function with empty supplier list.
+
+    Test passes if the intended_cost is equal to the total_cost_eur in the result from place_order, both rounded to 3 decimals.
+    """
+    intended_cost = basic_order_request.quantity * 15.0
+
+    result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, [])
+
+    assert round(result.total_cost_eur,3) == round(intended_cost, 3)
+
+
+  def test_case_55(self, basic_order_request, complete_parts, complete_offers):
+    """
+    Test notes the cost of the item from each supplier and stores it as price_per_item
+    Then it calculates the intended costs by multiplying the price_per_item by the requested quantity and rounding to 3 decimals
+    Then it runs the place_order function.
+
+    Test passes if the total_cost_eur in the result from place_order is any of the prices in intended_costs
+    NOTE: This doesn't only test the rounding, it is also dependent on test cases 46 and 49
+    """
+    price_per_item = []
+    for item in complete_offers:
+      if item.part_no == basic_order_request.part_no:
+        price_per_item.append(item.unit_price)
+
+    intended_cost = []
+    for price in price_per_item:
+      intended_cost.append(round(price * basic_order_request.quantity,3))
+
+    result = app.place_order(basic_order_request, complete_parts, [], complete_offers)
+
+    assert result.total_cost_eur in intended_cost
 
 
 class TestClassUnitValidateRequest:
