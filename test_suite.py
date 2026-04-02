@@ -45,7 +45,6 @@ import aeroparts_order_app as app
 from datetime import datetime, timedelta, UTC
 import pytest
 import random
-import math
 
 
 @pytest.fixture
@@ -128,6 +127,8 @@ def complete_parts():
     ),
   } 
   return parts
+
+
 
 @pytest.fixture
 def basic_order_request():
@@ -215,6 +216,8 @@ def fractional_request(basic_order_request):
   basic_order_request.quantity = 0.5
   return basic_order_request
 
+
+
 @pytest.fixture
 def complete_AMS_stock(complete_parts):
   """
@@ -269,6 +272,8 @@ def no_urgent_AMS_stock(complete_AMS_stock, urgent_request):
         complete_AMS_stock.remove(stock_item)
   return complete_AMS_stock
   
+
+
 @pytest.fixture
 def complete_offers(complete_parts):
   """
@@ -570,6 +575,7 @@ class TestClassSystem:
 
     assert result
 
+
   def test_case_35(self, negative_request, complete_parts, complete_AMS_stock, complete_offers):
     """
     Test calls the place_order function with a request with a negative quantity, a complete dictionary of parts, and a complete stock and offers.
@@ -678,6 +684,7 @@ class TestClassSystem:
 
     assert not duplicate_id
 
+
   def test_case_53(self, basic_order_request, complete_parts, complete_AMS_stock):
     """
     Test multiplies the requested quantity by the internal handling cost (15.0).
@@ -715,6 +722,7 @@ class TestClassSystem:
     assert result.total_cost_eur in intended_cost
 
 
+# A class to test the method validate_request
 class TestClassUnitValidateRequest:
   def test_case_12(self, complete_parts, basic_order_request):
     """
@@ -733,6 +741,7 @@ class TestClassUnitValidateRequest:
 
     assert compatible == False
 
+
   def test_case_34(self, complete_parts, basic_order_request):
     """
     Test changes the requested quantity of the basic order request to -1, a negative number.
@@ -745,6 +754,7 @@ class TestClassUnitValidateRequest:
     response = app.validate_request(basic_order_request, complete_parts)
 
     assert response
+
 
   def test_case_36(self, complete_parts, basic_order_request):
     """
@@ -759,6 +769,7 @@ class TestClassUnitValidateRequest:
 
     assert response
 
+
   def test_case_38_and_42(self, complete_parts, basic_order_request):
     """
     Test checks whether the validate_request function returns any issues with the default parts and order request.
@@ -770,6 +781,7 @@ class TestClassUnitValidateRequest:
 
     assert not response
 
+
   def test_case_40(self, complete_parts, basic_order_request):
     """
     Test changes the airplane_type of the basic order request to B737 to create an invalid order request as the part is for airplane_type A320
@@ -780,6 +792,7 @@ class TestClassUnitValidateRequest:
     response = app.validate_request(basic_order_request, complete_parts)
 
     assert response
+
 
 # A class to test the method to_eur
 class TestClassUnitToEur:
@@ -794,6 +807,7 @@ class TestClassUnitToEur:
     converted_amount = app.to_eur(amount, currency)
 
     assert round(converted_amount, 3) == round(amount * 0.92, 3)
+
 
   def test_case_47(self):
     """
