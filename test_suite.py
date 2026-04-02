@@ -648,3 +648,30 @@ class TestClassUnitValidateRequest:
     response = app.validate_request(basic_order_request, complete_parts)
 
     assert response
+
+# A class to test the method to_eur
+class TestClassUnitToEur:
+  def test_case_44(self):
+    """
+    Test calls the to_eur function with a random amount between 1 and 1000 and the currency USD.
+    Test then compares the result to the intended result (amount * 0.92), each rounded to 3 decimals to avoid rounding errors
+    Test passes if the result is equal to the amount * 0.92
+    """
+    amount = random.randint(1,100000)/100
+    currency = "USD"
+    converted_amount = app.to_eur(amount, currency)
+
+    assert round(converted_amount, 3) == round(amount * 0.92, 3)
+
+  def test_case_47(self):
+    """
+    Test calls the to_eur function with a random amount between 1 and 1000 and the currency EUR.
+    Test then compares the result to the intended result (amount), each rounded to 3 decimals to avoid rounding errors
+    Test passes if the result is equal to the original amount. 
+    """
+    amount = random.randint(1,100000)/100
+    currency = "EUR"
+    converted_amount = app.to_eur(amount, currency)
+
+    assert round(converted_amount, 3) == round(amount, 3)
+
