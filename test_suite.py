@@ -213,7 +213,7 @@ class TestClassSystem:
 
     response = app.place_order(request, complete_parts, complete_AMS_stock, complete_offers)
     
-    assert "statement to test (probably from response?)" == "whatever you want to test"
+  #   assert "statement to test (probably from response?)" == "whatever you want to test"
 
 
 
@@ -221,16 +221,67 @@ class TestClassSystem:
 
 # A class to test the method validate_request
 class TestClassUnitValidateRequest:
-  def test_example(self, complete_parts):
+  def test_case_12(self, complete_parts, basic_order_request):
     """
-    Dit is een voorbeeld van een test van de functie validate_request.
-    Vul op de eerste regel de variabelen in van de OrderRequest die je wilt testen, de input.
-    Maar eventueel een eigen parts lijst aan zoals relevant voor de test.
-    Roep de functie validate_request op, en sla deze op in een variabele (hier 'response').
-    Schrijf een assert statement waar je de 'response' vergelijkt met de verwachte output.
+    Test changes the airplane_type of the basic order request to B737 to create an invalid order request as the part is for airplane_type A320
+    It then checks all issues raised by validate_request and sets compatible to False if an issue contains "not compatible"
+    Test passes if compatible has been set to False
     """
-    request = app.OrderRequest("some id", "some no", "some type", 0, "prio", "requester", datetime.now(), "center")
+    basic_order_request.aircraft_type = "B737"
+    response = app.validate_request(basic_order_request, complete_parts)
 
-    response = app.validate_request(request, complete_parts)
+    compatible = True
 
-    assert "statement to test (probably from response?)" == "whatever you want to test"
+    for issue in response:
+      if "not compatible" in issue:
+        compatible = False
+
+    assert compatible == False
+
+  def test_case_34(self, complete_parts, basic_order_request):
+    """
+    Test changes the requested quantity of the basic order request to -1, a negative number.
+    It then checks whether the validate_request function returns any issues.
+    Test passes if any issue has been raised.
+
+    NOTE: Test currently passes because an erronous issue is raised (see test_case_12), will no longer pass when this is fixed.
+    """
+    basic_order_request.quantity = -1
+    response = app.validate_request(basic_order_request, complete_parts)
+
+    assert response
+
+  def test_case_36(self, complete_parts, basic_order_request):
+    """
+    Test changes the requested quantity of the basic order request to 0.5, a fractional number.
+    It then checks whether the validate_request function returns any issues.
+    Test passes if any issue has been raised.
+
+    NOTE: Test currently passes because an erronous issue is raised (see test_case_12), will no longer pass when this is fixed.
+    """
+    basic_order_request.quantity = 0.5
+    response = app.validate_request(basic_order_request, complete_parts)
+
+    assert response
+
+  def test_case_38_and_42(self, complete_parts, basic_order_request):
+    """
+    Test checks whether the validate_request function returns any issues with the default parts and order request.
+    Test passes if no issue has been raised.
+
+    NOTE: Test currently fails because an erronous issue is raised (see test_case_12/test_case_40), will no longer fail when this is fixed.
+    """
+    response = app.validate_request(basic_order_request, complete_parts)
+
+    assert not response
+
+  def test_case_40(self, complete_parts, basic_order_request):
+    """
+    Test changes the airplane_type of the basic order request to B737 to create an invalid order request as the part is for airplane_type A320
+    It then checks whether the validate_request function returns any issues.
+    Test passes if any issue has been raised.
+    """
+    basic_order_request.aircraft_type = "B737"
+    response = app.validate_request(basic_order_request, complete_parts)
+
+    assert response
