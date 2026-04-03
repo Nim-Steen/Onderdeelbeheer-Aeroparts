@@ -667,6 +667,7 @@ class TestClassSystem:
 
 
   @pytest.mark.criterium_18
+  @pytest.mark.criterium_20
   @pytest.mark.method_place_order
   def test_case_39(self, basic_order_request, complete_parts, complete_AMS_stock, complete_offers):
     """
