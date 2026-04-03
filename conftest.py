@@ -20,4 +20,4 @@ def pytest_sessionfinish(session, exitstatus):
 
 def pytest_runtest_logreport(report):
    if report.when == "call":
-    LOG_FILE.write(f"{report.nodeid} \t {report.when} {report.outcome} \n{report.capstdout}\n")
+    LOG_FILE.write(f"{report.head_line} \t {report.when} {report.outcome} \n{report.capstdout}\n")
