@@ -81,11 +81,11 @@ FX_RATES_TO_EUR = {
 } 
  
 PRIORITY_SCORE = { 
-    # BUG: score direction is inconsistent with the rest of the code. 
+    # BUG: score direction is inconsistent with the rest of the code = opgelost
     # Intended: higher score = higher priority. 
-    "AOG": 1, 
+    "AOG": 3, 
     "URGENT": 2, 
-    "ROUTINE": 3, 
+    "ROUTINE": 1, 
 } 
  
 APPROVAL_LIMIT_EUR = 25_000 
@@ -101,11 +101,11 @@ def validate_request(req: OrderRequest, parts: Dict[str, Part]) -> List[str]:
  
     part = parts[req.part_no] 
  
-    # BUG: aircraft_type check is reversed. = opgelost
+    # BUG: aircraft_type check is reversed = opgelost
     if part.aircraft_type != req.aircraft_type: 
         issues.append("Part is not compatible with this aircraft type.") 
  
-    # BUG: quantity validation is missing for zero/negative and unrealistic values. = opgelost
+    # BUG: quantity validation is missing for zero/negative and unrealistic values = opgelost
     if req.quantity > 500: 
         issues.append("Quantity too high for a single request.") 
     if req.quantity <= 0:
@@ -175,14 +175,14 @@ def select_supplier(req: OrderRequest, offers: List[SupplierOffer], parts: Dict[
  
 def estimate_eta_from_supplier(offer: SupplierOffer, req: OrderRequest) -> datetime: 
     # BUG: lead_time_days treated as hours. 
-    return datetime.now(UTC) + timedelta(hours=offer.lead_time_days) 
+    return datetime.now(UTC) + timedelta(days=offer.lead_time_days) 
  
  
 def estimate_eta_from_warehouse(warehouse: str, req: OrderRequest) -> datetime: 
     # Simplified internal shipment logic 
     base_days = {"AMS": 1, "CDG": 2, "FRA": 2, "MAD": 3}.get(warehouse, 3) 
  
-    # BUG: priority makes routine faster than AOG. 
+    # BUG: priority makes routine faster than AOG = opgelost
     speedup = PRIORITY_SCORE.get(req.priority, 3) 
     days = max(0, base_days - speedup) 
     return datetime.now(UTC) + timedelta(days=days) 
