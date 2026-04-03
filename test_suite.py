@@ -5,12 +5,29 @@ PREREQUISITE: typ het volgende in terminal: (dit hoeft alleen de eerste keer)
 Om tests uit te voeren, typ het volgende in terminal: 
   python -m pytest
 
-Om een specifieke test, of test class, uit te voeren, kun je een deel selecteren:
-  python -m pytest test_suite.py::[naam van class]                              Voor de hele class
-  python -m pytest test_suite.py::[naam van class]::[naam van test]             Voor een specifieke test
+Om een specifieke test uit te voeren, typ je het nummer van de testcase hier: (maak er altijd 2 decimalen van, dus bijv '06' ipv '6')
+  python -m pytest -k "[nummer]"
+  Bijvoorbeeld: python -m pytest -k "06"
 
-Bijvoorbeeld:
- python -m pytest test_suite.py::TestClassSystem::test_case_46
+Om een test voor een specifiek test_criterium uit te voeren, typ het nummer van het criterium hier: (dit keer zonder de extra 0)
+  python -m pytest -m criterium_[nummer]
+  Bijvoorbeeld: python -m pytest -m "criterium_6"
+
+Om alle tests voor een specifieke functie uit te voeren, typ de naam van de functie hierin:
+  python -m pytest m method_[naam-van-functie]
+  Bijvoorbeeld: python -m pytest -m "method_place_order"
+
+Met 'or' en 'and' kun je meerdere voorwaarden aangeven en daardoor meer of minder tests uitvoeren:
+  python -m pytest -k "06 or 14"
+  voert testcase 6 en 14 uit ('bevat 06 of 14')
+
+  python -m pytest -m "method_place_order and criterium_6"
+  voert alleen tests uit die place_order testen voor criterium 6 (voldoet aan beide)
+
+  python -m pytest -m "criterium_6 or criterium_7"
+  voert alle tests uit voor criterium 6 en voor criterium 7
+
+Dit kan verder gecombineerd met haakjes.
 ______________________________________________________________________________________________________
 
 In dit bestand staan tests (functies beginnende met 'test') verdeeld in test classes (classes beginnende met Test). 
@@ -361,7 +378,9 @@ def only_EUR_offers(complete_offers):
 
 # A class to test the full system, so everything that happens when place_order is called
 class TestClassSystem:
-  def test_case_6(self, cert_request, complete_parts, complete_no_cert_offers):
+  @pytest.mark.criterium_3
+  @pytest.mark.method_place_order
+  def test_case_06(self, cert_request, complete_parts, complete_no_cert_offers):
     """
     Test calls the place_order function with a request requiring certification, a complete dictionary of parts, empty stock and offers without certification.
     It then checks all notes in the resulting OrderResult and sets certified to False if a note contains "certif" 
@@ -382,7 +401,9 @@ class TestClassSystem:
     assert not certified
 
 
-  def test_case_9(self, low_needed_by_request, complete_parts, no_AOG_AMS_stock, complete_no_AOG_offers):
+  @pytest.mark.criterium_4
+  @pytest.mark.method_place_order
+  def test_case_09(self, low_needed_by_request, complete_parts, no_AOG_AMS_stock, complete_no_AOG_offers):
     """
     Test calls the place_order function with a request with 30 minute needed_by, a complete dictionary of parts, stock with ETA > 1hr and offers with lead_time of 4 days.
     It then checks all notes in the resulting OrderResult and sets in_time to False if a note contains "needed_by" 
@@ -402,6 +423,8 @@ class TestClassSystem:
 
     assert not in_time
 
+  @pytest.mark.criterium_5
+  @pytest.mark.method_place_order
   def test_case_11(self, low_needed_by_request, complete_parts, complete_expired_AMS_stock):
     """
     Test calls the place_order function with a request for an item with shelf_life, a complete dictionary of parts, stock with only expired parts and no offers.
@@ -422,6 +445,8 @@ class TestClassSystem:
     assert expired
 
 
+  @pytest.mark.criterium_6
+  @pytest.mark.method_place_order
   def test_case_13(self, incompatible_request, complete_parts, complete_AMS_stock, complete_offers):
     """
     Test calls the place_order function with a request for an item for a different plane, a complete dictionary of parts, and complete stock and offers.
@@ -442,6 +467,8 @@ class TestClassSystem:
     assert not compatible
 
 
+  @pytest.mark.criterium_7
+  @pytest.mark.method_place_order
   def test_case_14(self, basic_order_request, complete_parts, complete_AMS_stock, complete_offers):
     """
     Test calls the place_order function with a request for an item without issues, a complete dictionary of parts, and complete stock and offers.
@@ -455,6 +482,8 @@ class TestClassSystem:
     assert not result.notes
 
 
+  @pytest.mark.criterium_11
+  @pytest.mark.method_place_order
   def test_case_20(self, basic_order_request, complete_parts, complete_offers):
     """
     Test calls the place_order function with a request for an item without issues, a complete dictionary of parts, complete offers (which contains 2 offers for the part) and empty stock.
@@ -469,7 +498,8 @@ class TestClassSystem:
     assert len(result) > 1
 
 
-
+  @pytest.mark.criterium_12
+  @pytest.mark.method_place_order
   def test_case_24(self, basic_order_request, complete_parts, complete_AMS_stock):
     """
     Test notes the amount in stock of the requested item in the variable original_amount
@@ -493,7 +523,8 @@ class TestClassSystem:
     assert new_amount == original_amount - basic_order_request.quantity
 
 
-
+  @pytest.mark.criterium_13
+  @pytest.mark.method_place_order
   def test_case_25(self, AOG_request, complete_parts, no_AOG_AMS_stock, complete_no_AOG_offers):
     """
     Test calls the place_order function with an AOG request, a complete dictionary of parts, and stock and offers that cannot meet the AOG-eta requirement.
@@ -505,6 +536,8 @@ class TestClassSystem:
     assert not result
 
 
+  @pytest.mark.criterium_13
+  @pytest.mark.method_place_order
   def test_case_26(self, AOG_request, complete_parts, complete_AMS_stock, complete_no_AOG_offers):
     """
     Test calls the place_order function with an AOG request, a complete dictionary of parts, stock that can meet the AOG-eta requirement and offers that cannot.
@@ -516,6 +549,8 @@ class TestClassSystem:
     assert result.eta < datetime.now(UTC) + timedelta(hours=1)
 
 
+  @pytest.mark.criterium_13
+  @pytest.mark.method_place_order
   def test_case_27(self, AOG_request, complete_parts, no_AOG_AMS_stock, complete_offers):
     """
     Test calls the place_order function with an AOG request, a complete dictionary of parts, offers that can meet the AOG-eta requirement and stock that cannot.
@@ -529,6 +564,8 @@ class TestClassSystem:
     assert result.eta < datetime.now(UTC) + timedelta(hours=1)
 
 
+  @pytest.mark.criterium_14
+  @pytest.mark.method_place_order
   def test_case_28(self, urgent_request, complete_parts, no_urgent_AMS_stock, complete_no_urgent_offers):
     """
     Test calls the place_order function with an urgent request, a complete dictionary of parts, and stock and offers that cannot meet the urgent-eta requirement.
@@ -540,6 +577,8 @@ class TestClassSystem:
     assert not result
 
 
+  @pytest.mark.criterium_14
+  @pytest.mark.method_place_order
   def test_case_29(self, urgent_request, complete_parts, complete_AMS_stock, complete_no_urgent_offers):
     """
     Test calls the place_order function with an urgent request, a complete dictionary of parts, stock that can meet the urgent-eta requirement and offers that cannot.
@@ -551,6 +590,8 @@ class TestClassSystem:
     assert result.eta < datetime.now(UTC) + timedelta(days=5)
 
 
+  @pytest.mark.criterium_14
+  @pytest.mark.method_place_order
   def test_case_30(self, urgent_request, complete_parts, no_urgent_AMS_stock, complete_offers):
     """
     Test calls the place_order function with an urgent request, a complete dictionary of parts, offers that can meet the urgent-eta requirement and stock that cannot.
@@ -562,6 +603,8 @@ class TestClassSystem:
     assert result.eta < datetime.now(UTC) + timedelta(days=5)
         
 
+  @pytest.mark.criterium_15
+  @pytest.mark.method_place_order
   def test_case_31(self, basic_order_request, complete_parts, no_urgent_AMS_stock, complete_no_urgent_offers):
     """
     Test calls the place_order function with a routine request, a complete dictionary of parts, and stock and offers that cannot meet the urgent-eta requirement.
@@ -573,6 +616,8 @@ class TestClassSystem:
     assert result
 
 
+  @pytest.mark.criterium_15
+  @pytest.mark.method_place_order
   def test_case_32(self, basic_order_request, complete_parts, complete_AMS_stock, complete_no_urgent_offers):
     """
     Test calls the place_order function with an routine request, a complete dictionary of parts, stock that can meet the urgent-eta requirement and offers that cannot.
@@ -584,6 +629,8 @@ class TestClassSystem:
     assert result
 
 
+  @pytest.mark.criterium_15
+  @pytest.mark.method_place_order
   def test_case_33(self, basic_order_request, complete_parts, no_urgent_AMS_stock, complete_offers):
     """
     Test calls the place_order function with an routine request, a complete dictionary of parts, offers that can meet the urgent-eta requirement and stock that cannot.
@@ -595,6 +642,8 @@ class TestClassSystem:
     assert result
 
 
+  @pytest.mark.criterium_16
+  @pytest.mark.method_place_order
   def test_case_35(self, negative_request, complete_parts, complete_AMS_stock, complete_offers):
     """
     Test calls the place_order function with a request with a negative quantity, a complete dictionary of parts, and a complete stock and offers.
@@ -605,6 +654,8 @@ class TestClassSystem:
       app.place_order(negative_request, complete_parts, complete_AMS_stock, complete_offers)
 
 
+  @pytest.mark.criterium_17
+  @pytest.mark.method_place_order
   def test_case_37(self, fractional_request, complete_parts, complete_AMS_stock, complete_offers):
     """
     Test calls the place_order function with a request with a fractional quantity, a complete dictionary of parts, and a complete stock and offers.
@@ -615,6 +666,8 @@ class TestClassSystem:
       app.place_order(fractional_request, complete_parts, complete_AMS_stock, complete_offers)
 
 
+  @pytest.mark.criterium_18
+  @pytest.mark.method_place_order
   def test_case_39(self, basic_order_request, complete_parts, complete_AMS_stock, complete_offers):
     """
     Test calls the place_order function with a request with a positive, whole quantity, a complete dictionary of parts, and a complete stock and offers.
@@ -626,6 +679,8 @@ class TestClassSystem:
     assert result
 
 
+  @pytest.mark.criterium_19
+  @pytest.mark.method_place_order
   def test_case_41(self, incompatible_request, complete_parts, complete_AMS_stock, complete_offers):
     """
     Test calls the place_order function with a request with an incompatible part, a complete dictionary of parts, and a complete stock and offers.
@@ -636,6 +691,8 @@ class TestClassSystem:
       app.place_order(incompatible_request, complete_parts, complete_AMS_stock, complete_offers)
 
 
+  @pytest.mark.criterium_20
+  @pytest.mark.method_place_order
   def test_case_43(self, basic_order_request, complete_parts, complete_AMS_stock, complete_offers):
     """
     Test calls the place_order function with a request with a compatible part, a complete dictionary of parts, and a complete stock and offers.
@@ -647,6 +704,8 @@ class TestClassSystem:
     assert result
 
 
+  @pytest.mark.criterium_21
+  @pytest.mark.method_place_order
   def test_case_46(self, basic_order_request, complete_parts, only_USD_offers):
     """
     Test notes the cost of the item from the supplier and stores it as price_per_item
@@ -669,6 +728,8 @@ class TestClassSystem:
     assert round(result.total_cost_eur,3) == round(intended_cost, 3)
 
 
+  @pytest.mark.criterium_22
+  @pytest.mark.method_place_order
   def test_case_49(self, basic_order_request, complete_parts, only_EUR_offers):
     """
     Test notes the cost of the item from the supplier and stores it as price_per_item
@@ -690,6 +751,8 @@ class TestClassSystem:
     assert round(result.total_cost_eur,3) == round(intended_cost, 3)
 
   
+  @pytest.mark.criterium_23
+  @pytest.mark.method_place_order
   def test_case_51(self, basic_order_request, complete_parts, complete_AMS_stock, complete_offers):
     """
     Test creates up to 20 orders. 
@@ -712,6 +775,8 @@ class TestClassSystem:
     assert not duplicate_id
 
 
+  @pytest.mark.criterium_24
+  @pytest.mark.method_place_order
   def test_case_53(self, basic_order_request, complete_parts, complete_AMS_stock):
     """
     Test multiplies the requested quantity by the internal handling cost (15.0).
@@ -727,6 +792,8 @@ class TestClassSystem:
     assert round(result.total_cost_eur,3) == round(intended_cost, 3)
 
 
+  @pytest.mark.criterium_25
+  @pytest.mark.method_place_order
   def test_case_55(self, basic_order_request, complete_parts, complete_offers):
     """
     Test notes the cost of the item from each supplier and stores it as price_per_item
@@ -753,6 +820,8 @@ class TestClassSystem:
 
 # A class to test the method validate_request
 class TestClassUnitValidateRequest:
+  @pytest.mark.criterium_6
+  @pytest.mark.method_validate_request
   def test_case_12(self, complete_parts, basic_order_request):
     """
     Test changes the airplane_type of the basic order request to B737 to create an invalid order request as the part is for airplane_type A320
@@ -772,6 +841,8 @@ class TestClassUnitValidateRequest:
     assert compatible == False
 
 
+  @pytest.mark.criterium_16
+  @pytest.mark.method_validate_request
   def test_case_34(self, complete_parts, basic_order_request):
     """
     Test changes the requested quantity of the basic order request to -1, a negative number.
@@ -787,6 +858,8 @@ class TestClassUnitValidateRequest:
     assert response
 
 
+  @pytest.mark.criterium_17
+  @pytest.mark.method_validate_request
   def test_case_36(self, complete_parts, basic_order_request):
     """
     Test changes the requested quantity of the basic order request to 0.5, a fractional number.
@@ -802,6 +875,8 @@ class TestClassUnitValidateRequest:
     assert response
 
 
+  @pytest.mark.criterium_18
+  @pytest.mark.method_validate_request
   def test_case_38_and_42(self, complete_parts, basic_order_request):
     """
     Test checks whether the validate_request function returns any issues with the default parts and order request.
@@ -816,6 +891,8 @@ class TestClassUnitValidateRequest:
     assert not response
 
 
+  @pytest.mark.criterium_19
+  @pytest.mark.method_validate_request
   def test_case_40(self, complete_parts, basic_order_request):
     """
     Test changes the airplane_type of the basic order request to B737 to create an invalid order request as the part is for airplane_type A320
@@ -831,6 +908,8 @@ class TestClassUnitValidateRequest:
 
 # A class to test the method to_eur
 class TestClassUnitToEur:
+  @pytest.mark.criterium_21
+  @pytest.mark.method_to_eur
   def test_case_44(self):
     """
     Test calls the to_eur function with a random amount between 1 and 1000 and the currency USD.
@@ -845,6 +924,8 @@ class TestClassUnitToEur:
     assert round(converted_amount, 3) == round(amount * 0.92, 3)
 
 
+  @pytest.mark.criterium_22
+  @pytest.mark.method_to_eur
   def test_case_47(self):
     """
     Test calls the to_eur function with a random amount between 1 and 1000 and the currency EUR.
