@@ -64,6 +64,7 @@ import aeroparts_order_app as app
 from datetime import datetime, timedelta, UTC
 import pytest
 import random
+import copy
 
 
 @pytest.fixture
@@ -259,6 +260,18 @@ def complete_AMS_stock(complete_parts):
     stock.append(stock_item)
   return stock
 
+
+@pytest.fixture
+def complete_AMS_and_far_stock(complete_AMS_stock):
+  "returns stock from both AMS and a 'far' warehouse"
+  complete_stock = []
+  for stock in complete_AMS_stock:
+    complete_stock.append(stock)
+    far_stock = copy.copy(stock)
+    far_stock.warehouse = "far"
+    complete_stock.append(far_stock)
+  return complete_stock
+
 @pytest.fixture
 def complete_expired_AMS_stock(complete_AMS_stock):
   """
@@ -374,6 +387,123 @@ def only_EUR_offers(complete_offers):
         complete_offers.remove(supplier_offer)
   return complete_offers
 
+
+# A class to test the method validate_request
+class TestsDeductStock:
+  @pytest.mark.criterium_12
+  @pytest.mark.method_deduct_stock
+  def test_case_21(self, basic_order_request, complete_AMS_stock):
+    """
+    Test stores the original stock of the item in the AMS stock in the variable original_stock
+    Then it runs the function deduct_stock
+    Then it stores the new stock of the item in the AMS stock in the variable new_stock
+
+    Test passes if the new stock is equal to the original stock minus the requested quantity
+    """
+    print("Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.")
+
+    part_no = basic_order_request.part_no
+    quantity = basic_order_request.quantity
+    for stock in complete_AMS_stock:
+      if stock.part_no == part_no and stock.warehouse == "AMS":
+        original_stock = stock.on_hand
+        break
+
+    app.deduct_stock(complete_AMS_stock, part_no, "AMS", quantity)
+
+    for stock in complete_AMS_stock:
+      if stock.part_no == part_no and stock.warehouse == "AMS":
+        new_stock = stock.on_hand
+        break
+
+    assert new_stock == original_stock - quantity
+
+
+  @pytest.mark.criterium_12
+  @pytest.mark.method_deduct_stock
+  def test_case_22(self, basic_order_request, complete_AMS_and_far_stock):
+    """
+    Test stores the original stock of the item in the AMS stock in the variable original_AMS_stock and the original far stock in original_far_stock
+    Then it runs the function deduct_stock
+    Then it stores the new stock of the item in the AMS stock in the variable new_AMS_stock and the new far stock in new_far_stock
+
+    Test passes if the new stock is equal to the original AMS stock minus the requested quantity, and the original far stock hasn't changed
+    """
+    print("Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.")
+
+    part_no = basic_order_request.part_no
+    quantity = basic_order_request.quantity
+    for stock in complete_AMS_and_far_stock:
+      if stock.part_no == part_no and stock.warehouse == "AMS":
+        original_AMS_stock = stock.on_hand
+        break
+
+    for stock in complete_AMS_and_far_stock:
+      if stock.part_no == part_no and stock.warehouse == "far":
+        original_far_stock = stock.on_hand
+        break
+
+    app.deduct_stock(complete_AMS_and_far_stock, part_no, "AMS", quantity)
+
+    for stock in complete_AMS_and_far_stock:
+      if stock.part_no == part_no and stock.warehouse == "AMS":
+        new_AMS_stock = stock.on_hand
+        break
+    for stock in complete_AMS_and_far_stock:
+      if stock.part_no == part_no and stock.warehouse == "far":
+        new_far_stock = stock.on_hand
+        break
+
+    assert new_far_stock == original_far_stock and new_AMS_stock == original_AMS_stock - quantity
+
+
+  @pytest.mark.criterium_12
+  @pytest.mark.method_deduct_stock
+  def test_case_23(self, basic_order_request, complete_AMS_stock):
+    """
+    Test stores the original stock of the item in the AMS stock in the variable original_stock and the original stock of other parts in the list original_other_stock
+    Then it runs the function deduct_stock
+    Then it stores the new stock of the item in the AMS stock in the variable new_AMS_stock and the new stock of other parts in the list new_other_stock
+
+    Test passes if the new stock is equal to the original AMS stock minus the requested quantity, and the original other stock hasn't changed
+    """
+    print("Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.")
+
+    part_no = basic_order_request.part_no
+    quantity = basic_order_request.quantity
+    for stock in complete_AMS_stock:
+      if stock.part_no == part_no and stock.warehouse == "AMS":
+        original_stock = stock.on_hand
+        break
+    
+    original_other_stock = []
+    for stock in complete_AMS_stock:
+      if stock.part_no != part_no and stock.warehouse == "AMS":
+        original_other_stock.append(stock.on_hand)
+
+    print(original_other_stock)
+
+    app.deduct_stock(complete_AMS_stock, part_no, "AMS", quantity)
+
+    for stock in complete_AMS_stock:
+      if stock.part_no == part_no and stock.warehouse == "AMS":
+        new_stock = stock.on_hand
+        break
+
+    new_other_stock = []
+    for stock in complete_AMS_stock:
+      if stock.part_no != part_no and stock.warehouse == "AMS":
+        new_other_stock.append(stock.on_hand)
+
+    print(new_other_stock)
+
+    compare_other_stock = True
+
+    for i in range(len(original_other_stock)):
+      if original_other_stock[i-1] != new_other_stock[i-1]:
+        compare_other_stock == False
+
+    assert compare_other_stock and new_stock == original_stock - quantity
 
 
 # A class to test the full system, so everything that happens when place_order is called
