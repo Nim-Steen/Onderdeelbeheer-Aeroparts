@@ -375,9 +375,107 @@ def only_EUR_offers(complete_offers):
   return complete_offers
 
 
+# A class to test the method calculate_total_cost_eur
+class TestsCalculateTotalCostsEur:
+  @pytest.mark.criterium_21
+  @pytest.mark.method_calculate_total_cost_eur
+  def test_case_45(self, basic_order_request, only_USD_offers):
+    """
+    Test notes the cost of the item from the supplier and stores it as price_per_item, and stores the offer
+    Then it calculates the intended cost by multiplying by the exchange rate and the requested quantity
+    Then it runs the calculate_total_cost_eur function.
+
+    Test passes if the intended_cost is equal to the result of the function, both rounded to 3 decimals to avoid rounding errors
+    """
+    print("Test criterium 21: Wanneer een part in USD wordt besteld, wordt de prijs correct naar EUR converteerd")
+    for item in only_USD_offers:
+      if item.part_no == basic_order_request.part_no:
+        price_per_item = item.unit_price
+        offer = item
+        break
+
+    unit_cost_eur = price_per_item * app.FX_RATES_TO_EUR["USD"]
+    intended_cost = unit_cost_eur * basic_order_request.quantity
+    result = app.calculate_total_cost_eur("SUPPLIER", basic_order_request, offer)
+
+    assert round(intended_cost, 3) == round(result, 3)
+    
+    
+
+  @pytest.mark.criterium_22
+  @pytest.mark.method_calculate_total_cost_eur
+  def test_case_48(self, basic_order_request, only_EUR_offers):
+    """
+    Test notes the cost of the item from the supplier and stores it as price_per_item, and stores the offer
+    Then it calculates the intended cost by multiplying the price_per_item by the requested quantity
+    Then it runs the calculate_total_cost_eur function.
+
+    Test passes if the intended_cost is equal to the result of the function, both rounded to 3 decimals to avoid rounding errors
+    """
+    print("Test criterium 22: Wanneer een part in EUR wordt besteld, wordt de prijs niet geconverteerd")
+    for item in only_EUR_offers:
+      if item.part_no == basic_order_request.part_no:
+        price_per_item = item.unit_price
+        offer = item
+        break
+
+    intended_cost = price_per_item * basic_order_request.quantity
+
+    result = app.calculate_total_cost_eur("SUPPLIER", basic_order_request, offer)
+
+    assert round(result,3) == round(intended_cost, 3)
+
+
+  @pytest.mark.criterium_24
+  @pytest.mark.method_calculate_total_cost_eur
+  def test_case_52(self, basic_order_request):
+    """
+    Test multiplies the requested quantity by the internal handling cost (15.0).
+    Then it runs the calculate_total_cost_eur function.
+
+    Test passes if the intended_cost is equal to the result of the function, both rounded to 3 decimals.
+    """
+    print("Test criterium 24: De kosten van een part uit de warehouse wordt met 3 decimalen na de komma (of zoveel als relevant) weergegeven")
+    intended_cost = basic_order_request.quantity * 15.0
+
+    result = app.calculate_total_cost_eur("WAREHOUSE", basic_order_request, None)
+
+    assert round(result,3) == round(intended_cost, 3)
+
+
+  @pytest.mark.criterium_25
+  @pytest.mark.method_calculate_total_cost_eur
+  def test_case_54(self, basic_order_request, complete_offers):
+    """
+    Test notes the cost of the item from each supplier, multiplies it by the exchange rate in FX_RATES_TO_EUR and stores it as price_per_item
+    It also stores the offers.
+    Then it calculates the intended costs by multiplying the price_per_item by the requested quantity and rounding to 3 decimals
+    Then it runs the calculate_total_cost_eur function for each offer
+
+    Test passes if the result is the intended costs equal the results from the function
+    NOTE: This doesn't only test the rounding, it is also dependent on test cases 46 and 49
+    """
+    print("Test criterium 25: De kosten van een part van een supplier wordt met 3 decimalen na de komma weergegeven")
+    price_per_item = []
+    offers = []
+    for item in complete_offers:
+      if item.part_no == basic_order_request.part_no:
+        price_per_item.append(item.unit_price * app.FX_RATES_TO_EUR.get(item.currency, 1.0))
+        offers.append(item)
+
+    intended_cost = []
+    for price in price_per_item:
+      intended_cost.append(round(price * basic_order_request.quantity,3))
+
+    result = []
+    for offer in offers:
+      result.append(app.calculate_total_cost_eur("SUPPLIER", basic_order_request, offer))
+
+    assert result == intended_cost
+
 
 # A class to test the full system, so everything that happens when place_order is called
-class TestClassSystem:
+class TestsPlaceOrder:
   @pytest.mark.criterium_3
   @pytest.mark.method_place_order
   def test_case_06(self, cert_request, complete_parts, complete_no_cert_offers):
@@ -797,7 +895,7 @@ class TestClassSystem:
   @pytest.mark.method_place_order
   def test_case_55(self, basic_order_request, complete_parts, complete_offers):
     """
-    Test notes the cost of the item from each supplier and stores it as price_per_item
+    Test notes the cost of the item from each supplier, multiplies it by the exchange rate in FX_RATES_TO_EUR and stores it as price_per_item
     Then it calculates the intended costs by multiplying the price_per_item by the requested quantity and rounding to 3 decimals
     Then it runs the place_order function.
 
@@ -808,7 +906,8 @@ class TestClassSystem:
     price_per_item = []
     for item in complete_offers:
       if item.part_no == basic_order_request.part_no:
-        price_per_item.append(item.unit_price)
+        price_per_item.append(item.unit_price * app.FX_RATES_TO_EUR.get(item.currency, 1.0))
+
 
     intended_cost = []
     for price in price_per_item:
@@ -820,7 +919,7 @@ class TestClassSystem:
 
 
 # A class to test the method validate_request
-class TestClassUnitValidateRequest:
+class TestsValidateRequest:
   @pytest.mark.criterium_6
   @pytest.mark.method_validate_request
   def test_case_12(self, complete_parts, basic_order_request):
@@ -908,7 +1007,7 @@ class TestClassUnitValidateRequest:
 
 
 # A class to test the method to_eur
-class TestClassUnitToEur:
+class TestsToEur:
   @pytest.mark.criterium_21
   @pytest.mark.method_to_eur
   def test_case_44(self):
