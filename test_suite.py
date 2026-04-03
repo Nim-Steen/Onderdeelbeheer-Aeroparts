@@ -39,6 +39,8 @@ Deze kunnen dan in alle tests gebruikt worden door het als variabele aan te roep
 Qua organisatie is nu mijn idee om een class te maken per functie die getest moet worden. 
 Dan kan in de class de relevante variabelen al gedefiniëerd worden, en eventueel in de test zelf nog worden aangepast. 
 Maar dit is pas een eerste opzet en misschien niet de beste manier om dit aan te pakken. 
+
+Voor verdere context in de log kun je print statements in je tests toevoegen, alles wat geprint wordt, zal in de log worden geschreven. 
 """
 
 import aeroparts_order_app as app
