@@ -213,6 +213,14 @@ def AOG_request(basic_order_request):
   return basic_order_request
 
 @pytest.fixture
+def past_needed_by_request(AOG_request):
+  """
+  Returns the AOG_request above, but with needed_by 30 minutes ago
+  """
+  AOG_request.needed_by = datetime.now(UTC) - timedelta(minutes = 30)
+  return AOG_request
+
+@pytest.fixture
 def urgent_request(basic_order_request):
   """
   Returns the basic_order_request above, but with priority changed to "URGENT"
@@ -347,6 +355,18 @@ def complete_no_cert_offers(complete_offers):
   """
   for supplier_offer in complete_offers:
     supplier_offer.certified = False
+  return complete_offers
+  
+
+@pytest.fixture
+def complete_cert_and_no_cert_offers(complete_offers):
+  """
+  Returns list of offers but with the USD offers having certified = False but cheaper
+  """
+  for supplier_offer in complete_offers:
+    if supplier_offer.currency == "USD":
+      supplier_offer.certified = False
+      supplier_offer.unit_price = 1
   return complete_offers
 
 @pytest.fixture
@@ -504,10 +524,134 @@ class TestsDeductStock:
         compare_other_stock == False
 
     assert compare_other_stock and new_stock == original_stock - quantity
+# A class to test the method calculate_total_cost_eur
+class TestsCalculateTotalCostsEur:
+  @pytest.mark.criterium_21
+  @pytest.mark.method_calculate_total_cost_eur
+  def test_case_45(self, basic_order_request, only_USD_offers):
+    """
+    Test notes the cost of the item from the supplier and stores it as price_per_item, and stores the offer
+    Then it calculates the intended cost by multiplying by the exchange rate and the requested quantity
+    Then it runs the calculate_total_cost_eur function.
+
+    Test passes if the intended_cost is equal to the result of the function, both rounded to 3 decimals to avoid rounding errors
+    """
+    print("Test criterium 21: Wanneer een part in USD wordt besteld, wordt de prijs correct naar EUR converteerd")
+    for item in only_USD_offers:
+      if item.part_no == basic_order_request.part_no:
+        price_per_item = item.unit_price
+        offer = item
+        break
+
+    unit_cost_eur = price_per_item * app.FX_RATES_TO_EUR["USD"]
+    intended_cost = unit_cost_eur * basic_order_request.quantity
+    result = app.calculate_total_cost_eur("SUPPLIER", basic_order_request, offer)
+
+    assert round(intended_cost, 3) == round(result, 3)
+    
+    
+
+  @pytest.mark.criterium_22
+  @pytest.mark.method_calculate_total_cost_eur
+  def test_case_48(self, basic_order_request, only_EUR_offers):
+    """
+    Test notes the cost of the item from the supplier and stores it as price_per_item, and stores the offer
+    Then it calculates the intended cost by multiplying the price_per_item by the requested quantity
+    Then it runs the calculate_total_cost_eur function.
+
+    Test passes if the intended_cost is equal to the result of the function, both rounded to 3 decimals to avoid rounding errors
+    """
+    print("Test criterium 22: Wanneer een part in EUR wordt besteld, wordt de prijs niet geconverteerd")
+    for item in only_EUR_offers:
+      if item.part_no == basic_order_request.part_no:
+        price_per_item = item.unit_price
+        offer = item
+        break
+
+    intended_cost = price_per_item * basic_order_request.quantity
+
+    result = app.calculate_total_cost_eur("SUPPLIER", basic_order_request, offer)
+
+    assert round(result,3) == round(intended_cost, 3)
+
+
+  @pytest.mark.criterium_24
+  @pytest.mark.method_calculate_total_cost_eur
+  def test_case_52(self, basic_order_request):
+    """
+    Test multiplies the requested quantity by the internal handling cost (15.0).
+    Then it runs the calculate_total_cost_eur function.
+
+    Test passes if the intended_cost is equal to the result of the function, both rounded to 3 decimals.
+    """
+    print("Test criterium 24: De kosten van een part uit de warehouse wordt met 3 decimalen na de komma (of zoveel als relevant) weergegeven")
+    intended_cost = basic_order_request.quantity * 15.0
+
+    result = app.calculate_total_cost_eur("WAREHOUSE", basic_order_request, None)
+
+    assert round(result,3) == round(intended_cost, 3)
+
+
+  @pytest.mark.criterium_25
+  @pytest.mark.method_calculate_total_cost_eur
+  def test_case_54(self, basic_order_request, complete_offers):
+    """
+    Test notes the cost of the item from each supplier, multiplies it by the exchange rate in FX_RATES_TO_EUR and stores it as price_per_item
+    It also stores the offers.
+    Then it calculates the intended costs by multiplying the price_per_item by the requested quantity and rounding to 3 decimals
+    Then it runs the calculate_total_cost_eur function for each offer
+
+    Test passes if the result is the intended costs equal the results from the function
+    NOTE: This doesn't only test the rounding, it is also dependent on test cases 46 and 49
+    """
+    print("Test criterium 25: De kosten van een part van een supplier wordt met 3 decimalen na de komma weergegeven")
+    price_per_item = []
+    offers = []
+    for item in complete_offers:
+      if item.part_no == basic_order_request.part_no:
+        price_per_item.append(item.unit_price * app.FX_RATES_TO_EUR.get(item.currency, 1.0))
+        offers.append(item)
+
+    intended_cost = []
+    for price in price_per_item:
+      intended_cost.append(round(price * basic_order_request.quantity,3))
+
+    result = []
+    for offer in offers:
+      result.append(app.calculate_total_cost_eur("SUPPLIER", basic_order_request, offer))
+
+    assert result == intended_cost
+
+
+# A class to test the method generate_order_id
+class TestsGenerateOrderId:
+  @pytest.mark.criterium_23
+  @pytest.mark.method_generate_order_id
+  def test_case_50(self, basic_order_request):
+    """
+    Test creates up to 20 orders ids. 
+    Each new order_id is checked against a list of order_ids, and added to the list if it's not yet in there.
+    If the order_id is already in the list, duplicate_id is set to True and the loop ends.
+
+    The test passes if duplicate_id is not set to True. 
+    """
+    print("Test criterium 23: Als veel items in dezelfde seconde worden besteld, hebben ze ieder een uniek ordernummer")
+    order_ids = []
+    duplicate_id = False
+    for _ in range(20):
+      result = app.generate_order_id(basic_order_request)
+      if result not in order_ids:
+        order_ids.append(result)
+      else:
+        duplicate_id = True
+        break
+
+    assert not duplicate_id
+
 
 
 # A class to test the full system, so everything that happens when place_order is called
-class TestClassSystem:
+class TestsPlaceOrder:
   @pytest.mark.criterium_3
   @pytest.mark.method_place_order
   def test_case_06(self, cert_request, complete_parts, complete_no_cert_offers):
@@ -895,7 +1039,7 @@ class TestClassSystem:
     print("Test criterium 23: Als veel items in dezelfde seconde worden besteld, hebben ze ieder een uniek ordernummer")
     order_ids = []
     duplicate_id = False
-    for i in range(20):
+    for _ in range(20):
       result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, complete_offers)
       if result.order_id not in order_ids:
         order_ids.append(result.order_id)
@@ -927,7 +1071,7 @@ class TestClassSystem:
   @pytest.mark.method_place_order
   def test_case_55(self, basic_order_request, complete_parts, complete_offers):
     """
-    Test notes the cost of the item from each supplier and stores it as price_per_item
+    Test notes the cost of the item from each supplier, multiplies it by the exchange rate in FX_RATES_TO_EUR and stores it as price_per_item
     Then it calculates the intended costs by multiplying the price_per_item by the requested quantity and rounding to 3 decimals
     Then it runs the place_order function.
 
@@ -938,7 +1082,8 @@ class TestClassSystem:
     price_per_item = []
     for item in complete_offers:
       if item.part_no == basic_order_request.part_no:
-        price_per_item.append(item.unit_price)
+        price_per_item.append(item.unit_price * app.FX_RATES_TO_EUR.get(item.currency, 1.0))
+
 
     intended_cost = []
     for price in price_per_item:
@@ -950,7 +1095,7 @@ class TestClassSystem:
 
 
 # A class to test the method validate_request
-class TestClassUnitValidateRequest:
+class TestsValidateRequest:
   @pytest.mark.criterium_6
   @pytest.mark.method_validate_request
   def test_case_12(self, complete_parts, basic_order_request):
@@ -1038,7 +1183,7 @@ class TestClassUnitValidateRequest:
 
 
 # A class to test the method to_eur
-class TestClassUnitToEur:
+class TestsToEur:
   @pytest.mark.criterium_21
   @pytest.mark.method_to_eur
   def test_case_44(self):
@@ -1070,3 +1215,130 @@ class TestClassUnitToEur:
 
     assert round(converted_amount, 3) == round(amount, 3)
 
+
+
+# A class to test the method select_supplier
+class TestClassUnitSelectSupplier:
+  @pytest.mark.criterium_1
+  @pytest.mark.method_select_supplier
+  def test_case_02(self, AOG_request, complete_offers, complete_parts):
+    """
+    Test calls the select_supplier method with and AOG-request, complete offers and complete parts.
+    Test passes if the lead_time_days of the resulting offer is 0
+    """
+    print("Test criterium 1: Als bij een AOG-order de bestelling onder de ETA zit, wordt deze besteld")
+    result = app.select_supplier(AOG_request, complete_offers, complete_parts)
+
+    assert result.lead_time_days == 0
+    
+
+  @pytest.mark.criterium_2
+  @pytest.mark.method_select_supplier
+  def test_case_04(self, AOG_request, complete_no_AOG_offers, complete_parts):
+    """
+    Test calls the select_supplier method with an AOG-request, offers that don't meet AOG and complete parts.
+    Test passes if the function gives no result.
+    """
+    print("Test criterium 2: Als bij een AOG-order de bestelling boven de ETA zit, wordt deze niet besteld")
+    result = app.select_supplier(AOG_request, complete_no_AOG_offers, complete_parts)
+    
+    
+   @pytest.mark.criterium_8
+  @pytest.mark.method_select_supplier
+  def test_case_15(self, cert_request, complete_offers, complete_parts):
+    """
+    Test calls the select_supplier method with a request for a certified part, offers with certification and complete parts.
+    Test passes if the function gives a certified result
+    """
+    print("Test criterium 8: Als een order certificering nodig heeft en er is er een met certificering beschikbaar, dan wordt er een onderdeel met certificering besteld")
+    result = app.select_supplier(cert_request, complete_offers, complete_parts)
+
+    assert result.certified
+
+
+  @pytest.mark.criterium_8
+  @pytest.mark.method_select_supplier
+  def test_case_16(self, cert_request, complete_cert_and_no_cert_offers, complete_parts):
+    """
+    Test calls the select_supplier method with a request for a certified part, offers with certification and no certification but cheaper and complete parts.
+    Test passes if the function gives a certified result
+    """
+    print("Test criterium 8: Als een order certificering nodig heeft en er is er een met certificering beschikbaar, dan wordt er een onderdeel met certificering besteld")
+    result = app.select_supplier(cert_request, complete_cert_and_no_cert_offers, complete_parts)
+
+    assert result.certified
+
+
+  @pytest.mark.criterium_9
+  @pytest.mark.method_select_supplier
+  def test_case_17(self, cert_request, complete_no_cert_offers, complete_parts):
+    """
+    Test calls the select_supplier method with a request for a certified part, offers with no certification and complete parts.
+    Test passes if the function gives result
+    """
+    print("Test criterium 9: Als een order certificering nodig heeft en er is er geen met certificering beschikbaar, dan wordt er niks besteld")
+    result = app.select_supplier(cert_request, complete_no_cert_offers, complete_parts)
+
+    assert not result
+    
+    
+# A class to test the method select_warehouse
+class TestClassUnitSelectWarehouse:
+  @pytest.mark.criterium_1
+  @pytest.mark.method_select_warehouse
+  def test_case_01(self, AOG_request, complete_AMS_stock):
+    """
+    Test calls the select_warehouse function with an AOG request and the regular AMS stock.
+    Test passes if the function gives a result. 
+    """
+    print("Test criterium 1: Als bij een AOG-order de bestelling onder de ETA zit, wordt deze besteld")
+    result = app.select_warehouse(AOG_request, complete_AMS_stock)
+
+    assert result
+
+
+  @pytest.mark.criterium_2
+  @pytest.mark.method_select_warehouse
+  def test_case_03(self, past_needed_by_request, complete_AMS_stock):
+    """
+    Test calls the select_warehouse function with an AOG request with past needed_by, and the regular AMS stock.
+    Test passes if the function gives no result. 
+    """
+    print("Test criterium 2: Als bij een AOG-order de bestelling boven de ETA zit, wordt deze niet besteld")
+    result = app.select_warehouse(past_needed_by_request, complete_AMS_stock)
+
+    assert not result
+
+
+  @pytest.mark.criterium_10
+  @pytest.mark.method_select_warehouse
+  def test_case_18(self, shelf_life_request, complete_expired_AMS_stock):
+    """
+    Test calls the select_warehouse function with an request with a shelf life, and expired AMS stock.
+    Test passes if the function gives no result
+    """
+    print("Test criterium 10: Als een order een vervaldatum heeft, wordt er een onderdeel binnen de vervaldatum, of niks, besteld")
+    result = app.select_warehouse(shelf_life_request, complete_expired_AMS_stock)
+
+    assert not result
+
+
+  @pytest.mark.criterium_10
+  @pytest.mark.method_select_warehouse
+  def test_case_19(self, shelf_life_request, complete_expired_AMS_stock):
+    """
+    Test calls the select_warehouse function with an request with a shelf life, and expired AMS stock, met 1 niet-expired part in de far stock.
+    Test passes if the item from the far stock is chosen
+    """
+    print("Test criterium 10: Als een order een vervaldatum heeft, wordt er een onderdeel binnen de vervaldatum, of niks, besteld")
+    far_item = app.StockItem(
+      part_no = shelf_life_request.part_no,
+      warehouse = "far", 
+      on_hand = 10, 
+      reserved = 0,
+      safety_stock = 0,
+      expires_on = datetime.now() + timedelta(days=100)
+    )
+    result = app.select_warehouse(shelf_life_request, complete_expired_AMS_stock)
+
+    assert result == 'far'
