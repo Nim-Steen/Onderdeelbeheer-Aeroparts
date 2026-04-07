@@ -101,13 +101,18 @@ def validate_request(req: OrderRequest, parts: Dict[str, Part]) -> List[str]:
  
     part = parts[req.part_no] 
  
-    # BUG: aircraft_type check is reversed. 
-    if part.aircraft_type == req.aircraft_type: 
+    # BUG: aircraft_type check is reversed. = opgelost
+    if part.aircraft_type != req.aircraft_type: 
         issues.append("Part is not compatible with this aircraft type.") 
  
-    # BUG: quantity validation is missing for zero/negative and unrealistic values. 
+    # BUG: quantity validation is missing for zero/negative and unrealistic values. = opgelost
     if req.quantity > 500: 
         issues.append("Quantity too high for a single request.") 
+    if req.quantity <= 0:
+        issues.append("Cannot order zero or negative quantity")
+    if not isinstance(req.quantity, int):
+        issues.append("Cannot order decimal quantity")
+
  
     # Missing: validate priority values strictly 
     return issues 
