@@ -145,12 +145,12 @@ def get_user_input():
 
   aircraft_type = input("What plane is the part for? You can choose between A320 and B737 \n")
 
-  quantity = int(input("How many of this item do you need? Please only enter a whole number \n"))
+  quantity = float(input("How many of this item do you need? Please only enter a whole number \n"))
 
   priorities = [key for key in app.PRIORITY_SCORE.keys()]
   priority = input(f"What is the priority? You can choose from {priorities} \n").upper()
 
-  needed_by = datetime.now(UTC) + timedelta(hours = int(input(f"In how many hours is the item needed? Please only enter a whole number \n")))
+  needed_by = datetime.now(UTC) + timedelta(hours = float(input(f"In how many hours is the item needed? \n")))
 
   request = app.OrderRequest(
     request_id=1,
