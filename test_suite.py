@@ -384,6 +384,33 @@ def only_EUR_offers(complete_offers):
 
 
 
+# A class to test the method generate_order_id
+class TestsGenerateOrderId:
+  @pytest.mark.criterium_23
+  @pytest.mark.method_generate_order_id
+  def test_case_50(self, basic_order_request):
+    """
+    Test creates up to 20 orders ids. 
+    Each new order_id is checked against a list of order_ids, and added to the list if it's not yet in there.
+    If the order_id is already in the list, duplicate_id is set to True and the loop ends.
+
+    The test passes if duplicate_id is not set to True. 
+    """
+    print("Test criterium 23: Als veel items in dezelfde seconde worden besteld, hebben ze ieder een uniek ordernummer")
+    order_ids = []
+    duplicate_id = False
+    for _ in range(20):
+      result = app.generate_order_id(basic_order_request)
+      if result not in order_ids:
+        order_ids.append(result)
+      else:
+        duplicate_id = True
+        break
+
+    assert not duplicate_id
+
+
+
 # A class to test the full system, so everything that happens when place_order is called
 class TestClassSystem:
   @pytest.mark.criterium_3
@@ -773,7 +800,7 @@ class TestClassSystem:
     print("Test criterium 23: Als veel items in dezelfde seconde worden besteld, hebben ze ieder een uniek ordernummer")
     order_ids = []
     duplicate_id = False
-    for i in range(20):
+    for _ in range(20):
       result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, complete_offers)
       if result.order_id not in order_ids:
         order_ids.append(result.order_id)
