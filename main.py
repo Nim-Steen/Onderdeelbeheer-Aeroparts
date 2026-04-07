@@ -1,5 +1,5 @@
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 import aeroparts_order_app as app
 
@@ -96,7 +96,7 @@ for part in parts.values():
     on_hand = random.randint(10,1000),
     reserved = 0,
     safety_stock = 0,
-    expires_on = datetime.now() + timedelta(days=part.shelf_life_days) if part.shelf_life_days else None
+    expires_on = datetime.now(UTC) + timedelta(days=part.shelf_life_days) if part.shelf_life_days else None
   )
   stock.append(stock_item)
 
@@ -150,7 +150,7 @@ def get_user_input():
   priorities = [key for key in app.PRIORITY_SCORE.keys()]
   priority = input(f"What is the priority? You can choose from {priorities} \n").upper()
 
-  needed_by = datetime.now() + timedelta(hours = int(input(f"In how many hours is the item needed? Please only enter a whole number \n")))
+  needed_by = datetime.now(UTC) + timedelta(hours = int(input(f"In how many hours is the item needed? Please only enter a whole number \n")))
 
   request = app.OrderRequest(
     request_id=1,
