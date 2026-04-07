@@ -1325,7 +1325,7 @@ class TestClassUnitSelectWarehouse:
       on_hand = 10, 
       reserved = 0,
       safety_stock = 0,
-      expires_on = datetime.now() + timedelta(days=100)
+      expires_on = datetime.now(UTC) + timedelta(days=100)
     )
     complete_expired_AMS_stock.append(far_item)
     result = app.select_warehouse(shelf_life_request, complete_expired_AMS_stock)
