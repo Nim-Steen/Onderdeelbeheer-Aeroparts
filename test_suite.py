@@ -343,6 +343,18 @@ def complete_no_cert_offers(complete_offers):
   for supplier_offer in complete_offers:
     supplier_offer.certified = False
   return complete_offers
+  
+
+@pytest.fixture
+def complete_cert_and_no_cert_offers(complete_offers):
+  """
+  Returns list of offers but with the USD offers having certified = False but cheaper
+  """
+  for supplier_offer in complete_offers:
+    if supplier_offer.currency == "USD":
+      supplier_offer.certified = False
+      supplier_offer.unit_price = 1
+  return complete_offers
 
 @pytest.fixture
 def complete_no_AOG_offers(complete_offers):
@@ -1075,6 +1087,72 @@ class TestsToEur:
     assert round(converted_amount, 3) == round(amount, 3)
 
 
+
+# A class to test the method select_supplier
+class TestClassUnitSelectSupplier:
+  @pytest.mark.criterium_1
+  @pytest.mark.method_select_supplier
+  def test_case_02(self, AOG_request, complete_offers, complete_parts):
+    """
+    Test calls the select_supplier method with and AOG-request, complete offers and complete parts.
+    Test passes if the lead_time_days of the resulting offer is 0
+    """
+    print("Test criterium 1: Als bij een AOG-order de bestelling onder de ETA zit, wordt deze besteld")
+    result = app.select_supplier(AOG_request, complete_offers, complete_parts)
+
+    assert result.lead_time_days == 0
+    
+
+  @pytest.mark.criterium_2
+  @pytest.mark.method_select_supplier
+  def test_case_04(self, AOG_request, complete_no_AOG_offers, complete_parts):
+    """
+    Test calls the select_supplier method with an AOG-request, offers that don't meet AOG and complete parts.
+    Test passes if the function gives no result.
+    """
+    print("Test criterium 2: Als bij een AOG-order de bestelling boven de ETA zit, wordt deze niet besteld")
+    result = app.select_supplier(AOG_request, complete_no_AOG_offers, complete_parts)
+    
+    
+   @pytest.mark.criterium_8
+  @pytest.mark.method_select_supplier
+  def test_case_15(self, cert_request, complete_offers, complete_parts):
+    """
+    Test calls the select_supplier method with a request for a certified part, offers with certification and complete parts.
+    Test passes if the function gives a certified result
+    """
+    print("Test criterium 8: Als een order certificering nodig heeft en er is er een met certificering beschikbaar, dan wordt er een onderdeel met certificering besteld")
+    result = app.select_supplier(cert_request, complete_offers, complete_parts)
+
+    assert result.certified
+
+
+  @pytest.mark.criterium_8
+  @pytest.mark.method_select_supplier
+  def test_case_16(self, cert_request, complete_cert_and_no_cert_offers, complete_parts):
+    """
+    Test calls the select_supplier method with a request for a certified part, offers with certification and no certification but cheaper and complete parts.
+    Test passes if the function gives a certified result
+    """
+    print("Test criterium 8: Als een order certificering nodig heeft en er is er een met certificering beschikbaar, dan wordt er een onderdeel met certificering besteld")
+    result = app.select_supplier(cert_request, complete_cert_and_no_cert_offers, complete_parts)
+
+    assert result.certified
+
+
+  @pytest.mark.criterium_9
+  @pytest.mark.method_select_supplier
+  def test_case_17(self, cert_request, complete_no_cert_offers, complete_parts):
+    """
+    Test calls the select_supplier method with a request for a certified part, offers with no certification and complete parts.
+    Test passes if the function gives result
+    """
+    print("Test criterium 9: Als een order certificering nodig heeft en er is er geen met certificering beschikbaar, dan wordt er niks besteld")
+    result = app.select_supplier(cert_request, complete_no_cert_offers, complete_parts)
+
+    assert not result
+    
+    
 # A class to test the method select_warehouse
 class TestClassUnitSelectWarehouse:
   @pytest.mark.criterium_1
