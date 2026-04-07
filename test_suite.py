@@ -1335,6 +1335,7 @@ class TestClassUnitSelectWarehouse:
       safety_stock = 0,
       expires_on = datetime.now() + timedelta(days=100)
     )
+    complete_expired_AMS_stock.append(far_item)
     result = app.select_warehouse(shelf_life_request, complete_expired_AMS_stock)
 
     assert result == 'far'
