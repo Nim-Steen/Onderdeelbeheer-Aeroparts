@@ -212,6 +212,14 @@ def AOG_request(basic_order_request):
   return basic_order_request
 
 @pytest.fixture
+def past_needed_by_request(AOG_request):
+  """
+  Returns the AOG_request above, but with needed_by 30 minutes ago
+  """
+  AOG_request.needed_by = datetime.now(UTC) - timedelta(minutes = 30)
+  return AOG_request
+
+@pytest.fixture
 def urgent_request(basic_order_request):
   """
   Returns the basic_order_request above, but with priority changed to "URGENT"
@@ -940,3 +948,64 @@ class TestClassUnitToEur:
 
     assert round(converted_amount, 3) == round(amount, 3)
 
+
+# A class to test the method select_warehouse
+class TestClassUnitSelectWarehouse:
+  @pytest.mark.criterium_1
+  @pytest.mark.method_select_warehouse
+  def test_case_01(self, AOG_request, complete_AMS_stock):
+    """
+    Test calls the select_warehouse function with an AOG request and the regular AMS stock.
+    Test passes if the function gives a result. 
+    """
+    print("Test criterium 1: Als bij een AOG-order de bestelling onder de ETA zit, wordt deze besteld")
+    result = app.select_warehouse(AOG_request, complete_AMS_stock)
+
+    assert result
+
+
+  @pytest.mark.criterium_2
+  @pytest.mark.method_select_warehouse
+  def test_case_03(self, past_needed_by_request, complete_AMS_stock):
+    """
+    Test calls the select_warehouse function with an AOG request with past needed_by, and the regular AMS stock.
+    Test passes if the function gives no result. 
+    """
+    print("Test criterium 2: Als bij een AOG-order de bestelling boven de ETA zit, wordt deze niet besteld")
+    result = app.select_warehouse(past_needed_by_request, complete_AMS_stock)
+
+    assert not result
+
+
+  @pytest.mark.criterium_10
+  @pytest.mark.method_select_warehouse
+  def test_case_18(self, shelf_life_request, complete_expired_AMS_stock):
+    """
+    Test calls the select_warehouse function with an request with a shelf life, and expired AMS stock.
+    Test passes if the function gives no result
+    """
+    print("Test criterium 10: Als een order een vervaldatum heeft, wordt er een onderdeel binnen de vervaldatum, of niks, besteld")
+    result = app.select_warehouse(shelf_life_request, complete_expired_AMS_stock)
+
+    assert not result
+
+
+  @pytest.mark.criterium_10
+  @pytest.mark.method_select_warehouse
+  def test_case_19(self, shelf_life_request, complete_expired_AMS_stock):
+    """
+    Test calls the select_warehouse function with an request with a shelf life, and expired AMS stock, met 1 niet-expired part in de far stock.
+    Test passes if the item from the far stock is chosen
+    """
+    print("Test criterium 10: Als een order een vervaldatum heeft, wordt er een onderdeel binnen de vervaldatum, of niks, besteld")
+    far_item = app.StockItem(
+      part_no = shelf_life_request.part_no,
+      warehouse = "far", 
+      on_hand = 10, 
+      reserved = 0,
+      safety_stock = 0,
+      expires_on = datetime.now() + timedelta(days=100)
+    )
+    result = app.select_warehouse(shelf_life_request, complete_expired_AMS_stock)
+
+    assert result == 'far'
