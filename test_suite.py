@@ -408,7 +408,7 @@ def only_EUR_offers(complete_offers):
   return complete_offers
 
 
-# A class to test the method validate_request
+# A class to test the method deduct_stock
 class TestsDeductStock:
   @pytest.mark.criterium_12
   @pytest.mark.method_deduct_stock
@@ -1094,15 +1094,13 @@ class TestsPlaceOrder:
 class TestsValidateRequest:
   @pytest.mark.criterium_6
   @pytest.mark.method_validate_request
-  def test_case_12(self, complete_parts, basic_order_request):
+  def test_case_12(self, complete_parts, incompatible_request):
     """
-    Test changes the airplane_type of the basic order request to B737 to create an invalid order request as the part is for airplane_type A320
-    It then checks all issues raised by validate_request and sets compatible to False if an issue contains "not compatible"
+    It then checks all issues raised by validate_request using an incompatible request and sets compatible to False if an issue contains "not compatible"
     Test passes if compatible has been set to False
     """
     print("Test criterium 6: Als bij een order voor een vliegtuig geen onderdeel voor dat vliegtuig beschikbaar is, krijgt de gebruiker hier melding van")
-    basic_order_request.aircraft_type = "B737"
-    response = app.validate_request(basic_order_request, complete_parts)
+    response = app.validate_request(incompatible_request, complete_parts)
 
     compatible = True
 
@@ -1115,34 +1113,30 @@ class TestsValidateRequest:
 
   @pytest.mark.criterium_16
   @pytest.mark.method_validate_request
-  def test_case_34(self, complete_parts, basic_order_request):
+  def test_case_34(self, complete_parts, negative_request):
     """
-    Test changes the requested quantity of the basic order request to -1, a negative number.
-    It then checks whether the validate_request function returns any issues.
+    Test checks whether the validate_request function returns any issues when a negative amount is requested.
     Test passes if any issue has been raised.
 
     NOTE: Test currently passes because an erronous issue is raised (see test_case_12), will no longer pass when this is fixed.
     """
     print("Test criterium 16: Wanneer een negatief aantal parts wordt besteld, runt het script niet")
-    basic_order_request.quantity = -1
-    response = app.validate_request(basic_order_request, complete_parts)
+    response = app.validate_request(negative_request, complete_parts)
 
     assert response
 
 
   @pytest.mark.criterium_17
   @pytest.mark.method_validate_request
-  def test_case_36(self, complete_parts, basic_order_request):
+  def test_case_36(self, complete_parts, fractional_request):
     """
-    Test changes the requested quantity of the basic order request to 0.5, a fractional number.
-    It then checks whether the validate_request function returns any issues.
+    Test checks whether the validate_request function returns any issues with a fractional request.
     Test passes if any issue has been raised.
 
     NOTE: Test currently passes because an erronous issue is raised (see test_case_12), will no longer pass when this is fixed.
     """
     print("Test criterium 17: Wanneer een niet-geheel aantal parts wordt besteld, runt het script niet")
-    basic_order_request.quantity = 0.5
-    response = app.validate_request(basic_order_request, complete_parts)
+    response = app.validate_request(fractional_request, complete_parts)
 
     assert response
 
@@ -1165,15 +1159,13 @@ class TestsValidateRequest:
 
   @pytest.mark.criterium_19
   @pytest.mark.method_validate_request
-  def test_case_40(self, complete_parts, basic_order_request):
+  def test_case_40(self, complete_parts, incompatible_request):
     """
-    Test changes the airplane_type of the basic order request to B737 to create an invalid order request as the part is for airplane_type A320
-    It then checks whether the validate_request function returns any issues.
+    Test checks whether the validate_request function returns any issues with an incompatible request.
     Test passes if any issue has been raised.
     """
     print("Test criterium 19: Wanneer het gevraagde part van een order niet overeenkomt met het gevraagde vliegtuigtype, runt het script niet")
-    basic_order_request.aircraft_type = "B737"
-    response = app.validate_request(basic_order_request, complete_parts)
+    response = app.validate_request(incompatible_request, complete_parts)
 
     assert response
 
@@ -1333,8 +1325,9 @@ class TestClassUnitSelectWarehouse:
       on_hand = 10, 
       reserved = 0,
       safety_stock = 0,
-      expires_on = datetime.now() + timedelta(days=100)
+      expires_on = datetime.now(UTC) + timedelta(days=100)
     )
+    complete_expired_AMS_stock.append(far_item)
     result = app.select_warehouse(shelf_life_request, complete_expired_AMS_stock)
 
     assert result == 'far'
