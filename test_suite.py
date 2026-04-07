@@ -501,8 +501,6 @@ class TestsDeductStock:
       if stock.part_no != part_no and stock.warehouse == "AMS":
         original_other_stock.append(stock.on_hand)
 
-    print(original_other_stock)
-
     app.deduct_stock(complete_AMS_stock, part_no, "AMS", quantity)
 
     for stock in complete_AMS_stock:
@@ -514,8 +512,6 @@ class TestsDeductStock:
     for stock in complete_AMS_stock:
       if stock.part_no != part_no and stock.warehouse == "AMS":
         new_other_stock.append(stock.on_hand)
-
-    print(new_other_stock)
 
     compare_other_stock = True
 
@@ -1243,7 +1239,7 @@ class TestClassUnitSelectSupplier:
     result = app.select_supplier(AOG_request, complete_no_AOG_offers, complete_parts)
     
     
-   @pytest.mark.criterium_8
+  @pytest.mark.criterium_8
   @pytest.mark.method_select_supplier
   def test_case_15(self, cert_request, complete_offers, complete_parts):
     """
