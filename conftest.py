@@ -1,23 +1,24 @@
-from datetime import datetime
+""" Pytest kan gebruik maken van de Python logging module om testresultaten te loggen. 
+Dit is beter dan handmatig printen, omdat het meer flexibiliteit biedt en beter integreert met testresultaten."""
+import logging
 
-LOG_FILE = None
+""" Deze method wordt automatisch door pytest aangeroepen om de logging configuratie in te stellen."""
+def pytest_configure(config):
+    """Configure logging for pytest."""
+    logging.getLogger().setLevel(logging.DEBUG)
 
-
-def pytest_sessionstart(session):
-    global LOG_FILE
-    LOG_FILE = open("pytest_log/aeroparts_order_test_log.txt", "a")
-    LOG_FILE.write(f"Test run at {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}\n")
-    LOG_FILE.write("________________________________________________________________________________\n")
-
-
-def pytest_sessionfinish(session, exitstatus):
-    global LOG_FILE
-    if LOG_FILE:
-        LOG_FILE.write("________________________________________________________________________________\n\n\n")
-        LOG_FILE.close()
-        LOG_FILE = None
-
-
+"""Deze method wordt automatisch door pytest aangeroepen na elke test om het resultaat te loggen."""
 def pytest_runtest_logreport(report):
-   if report.when == "call":
-    LOG_FILE.write(f"{report.head_line} \t {report.when} {report.outcome} \n{report.capstdout}\n")
+    """Log test results (pass/fail/skip) with details."""
+    logger = logging.getLogger(__name__)
+    
+    if report.when == "call":
+        if report.outcome == "passed":
+            logger.info(f"✓ {report.nodeid} PASSED")
+        elif report.outcome == "failed":
+            logger.error(f"✗ {report.nodeid} FAILED")
+            """ Log de reden van falen als er een reden beschikbaar is."""
+            if report.longrepr:
+                logger.error(f"  Reason: {report.longrepr}")
+        elif report.outcome == "skipped":
+            logger.warning(f"⊘ {report.nodeid} SKIPPED")
