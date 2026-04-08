@@ -248,6 +248,14 @@ def fractional_request(basic_order_request):
   basic_order_request.quantity = 0.5
   return basic_order_request
 
+@pytest.fixture
+def big_request(basic_order_request):
+  """
+  Returns the basic_order_request above, but with the quantity between 10 and 50
+  """
+  basic_order_request.quantity = random.randint(10,50)
+  return basic_order_request
+
 
 
 @pytest.fixture
@@ -283,6 +291,25 @@ def complete_AMS_and_far_stock(complete_AMS_stock):
     far_stock.warehouse = "far"
     complete_stock.append(far_stock)
   return complete_stock
+
+
+@pytest.fixture
+def complete_more_far_than_AMS_stock(complete_AMS_and_far_stock):
+  for stock in complete_AMS_and_far_stock:
+    if stock.warehouse == "AMS":
+      stock.on_hand = 10
+    else:
+      stock.on_hand = 100
+  return complete_AMS_and_far_stock
+    
+
+
+@pytest.fixture
+def complete_far_stock(complete_AMS_stock):
+  "returns stock from a 'far' warehouse"
+  for stock in complete_AMS_stock:
+    stock.warehouse = "far"
+  return complete_AMS_stock
 
 @pytest.fixture
 def complete_expired_AMS_stock(complete_AMS_stock):
@@ -409,6 +436,15 @@ def only_EUR_offers(complete_offers):
   for supplier_offer in complete_offers:
     if supplier_offer == "USD":
         complete_offers.remove(supplier_offer)
+  return complete_offers
+
+@pytest.fixture
+def complete_expensive_offers(complete_offers):
+  """
+  Returns list of offers but with all unit_prices above the approval limit
+  """
+  for supplier_offer in complete_offers:
+    supplier_offer.unit_price = app.APPROVAL_LIMIT_EUR + 1
   return complete_offers
 
 
@@ -554,10 +590,10 @@ class TestsCalculateTotalCostsEur:
     assert round(intended_cost, 3) == round(result, 3)
     
     
-
   @pytest.mark.criterium_22
+  @pytest.mark.criterium_32
   @pytest.mark.method_calculate_total_cost_eur
-  def test_case_48(self, basic_order_request, only_EUR_offers):
+  def test_case_48_and_69(self, basic_order_request, only_EUR_offers):
     """
     Test notes the cost of the item from the supplier and stores it as price_per_item, and stores the offer
     Then it calculates the intended cost by multiplying the price_per_item by the requested quantity
@@ -566,6 +602,7 @@ class TestsCalculateTotalCostsEur:
     Test passes if the intended_cost is equal to the result of the function, both rounded to 3 decimals to avoid rounding errors
     """
     logger.info("Test criterium 22: Wanneer een part in EUR wordt besteld, wordt de prijs niet geconverteerd")
+    logger.info("Test criterium 32: Wanneer minder dan 10 items worden besteld bij een supplier, wordt de kost per part gelijk aan de unit price")
     for item in only_EUR_offers:
       if item.part_no == basic_order_request.part_no:
         price_per_item = item.unit_price
@@ -625,6 +662,30 @@ class TestsCalculateTotalCostsEur:
       result.append(app.calculate_total_cost_eur("SUPPLIER", basic_order_request, offer))
 
     assert result == intended_cost
+
+
+  @pytest.mark.criterium_31
+  @pytest.mark.method_calculate_total_cost_eur
+  def test_case_67(self, big_request, only_EUR_offers):
+    """
+    Test notes the cost of the item from the supplier and stores it as price_per_item, and stores the offer
+    Then it calculates the intended cost by multiplying the price_per_item by the requested quantity
+    Then it runs the calculate_total_cost_eur function.
+
+    Test passes if the without_discount is higher than the result of the function, both rounded to 3 decimals to avoid rounding errors
+    """
+    logger.info("Test criterium 31: Wanneer meer dan 10 items worden besteld bij een supplier, wordt de kost per part lager dan de unit price")
+    for item in only_EUR_offers:
+      if item.part_no == big_request.part_no:
+        price_per_item = item.unit_price
+        offer = item
+        break
+
+    without_discount = price_per_item * big_request.quantity
+
+    result = app.calculate_total_cost_eur("SUPPLIER", big_request, offer)
+
+    assert round(result,3) < round(without_discount, 3)
 
 
 
@@ -1009,8 +1070,9 @@ class TestsPlaceOrder:
 
 
   @pytest.mark.criterium_22
+  @pytest.mark.criterium_32
   @pytest.mark.method_place_order
-  def test_case_49(self, basic_order_request, complete_parts, only_EUR_offers):
+  def test_case_49_and_70(self, basic_order_request, complete_parts, only_EUR_offers):
     """
     Test notes the cost of the item from the supplier and stores it as price_per_item
     Then it calculates the intended cost by multiplying the price_per_item by the requested quantity
@@ -1019,6 +1081,7 @@ class TestsPlaceOrder:
     Test passes if the intended_cost is equal to the total_cost_eur in the result from place_order, both rounded to 3 decimals to avoid rounding errors
     """
     logger.info("Test criterium 22: Wanneer een part in EUR wordt besteld, wordt de prijs niet geconverteerd")
+    logger.info("Test criterium 32: Wanneer minder dan 10 items worden besteld bij een supplier, wordt de kost per part gelijk aan de unit price")
     for item in only_EUR_offers:
       if item.part_no == basic_order_request.part_no:
         price_per_item = item.unit_price
@@ -1121,6 +1184,82 @@ class TestsPlaceOrder:
     assert result.source == cheapest_offer.supplier
 
 
+  @pytest.mark.criterium_28
+  @pytest.mark.method_place_order
+  def test_case_64(self, low_needed_by_request, complete_far_stock, complete_no_urgent_offers, complete_parts):
+    """
+    Test calls the place_order function with an request with low needed_by, offers with high lead_time and stock at a far warehouse.
+    Test passes if the function gives no result
+    """
+    logger.info("Test criterium 28: Wanneer er geen part binnen de needed_by binnen kan komen, wordt het niet besteld")
+    result = app.place_order(low_needed_by_request, complete_parts, complete_far_stock, complete_no_urgent_offers)
+
+    assert not result
+
+
+  @pytest.mark.criterium_29
+  @pytest.mark.method_place_order
+  def test_case_66(self, basic_order_request, complete_more_far_than_AMS_stock, complete_parts):
+    """
+    The test then calls place_order with a default order request, stock where the far warehouse has more stock than AMS, and empty offers
+    Test passes if result picks the closest (and thus fastest) warehouse
+    """
+    logger.info("Test criterium 29: Wanneer bij meerdere warehouses kan worden besteld, wordt degene met de snelste levering gekozen")
+    result = app.place_order(basic_order_request, complete_parts, complete_more_far_than_AMS_stock, [])
+
+    assert result.source == "AMS"
+
+
+  @pytest.mark.criterium_31
+  @pytest.mark.method_place_order
+  def test_case_68(self, big_request, complete_parts, only_EUR_offers):
+    """
+    Test notes the cost of the item from the supplier and stores it as price_per_item
+    Then it calculates the cost without discount by multiplying the price_per_item by the requested quantity
+    Then it runs the place_order function.
+
+    Test passes if the no_discount_cost is higher than the total_cost_eur in the result from place_order, both rounded to 3 decimals to avoid rounding errors
+    """
+    logger.info("Test criterium 31: Wanneer meer dan 10 items worden besteld bij een supplier, wordt de kost per part lager dan de unit price")
+    for item in only_EUR_offers:
+      if item.part_no == big_request.part_no:
+        price_per_item = item.unit_price
+        break
+
+    no_discount_cost = price_per_item * big_request.quantity
+
+    result = app.place_order(big_request, complete_parts, [], only_EUR_offers)
+
+    assert round(result.total_cost_eur,3) == round(no_discount_cost, 3)
+
+
+  @pytest.mark.criterium_33
+  @pytest.mark.method_place_order
+  def test_case_71(self, basic_order_request, complete_parts, complete_expensive_offers):
+    """
+    The test then calls place_order with a default order request, empty stock and too expensive offers
+    Test passes if no order is placed
+    """
+    logger.info("Test criterium 33: Wanneer de kosten van een order boven de approval_limit liggen, wordt het niet besteld")
+    result = app.place_order(basic_order_request, complete_parts, [], complete_expensive_offers)
+
+    assert not result
+
+
+  @pytest.mark.criterium_34
+  @pytest.mark.method_place_order
+  def test_case_72(self, basic_order_request, complete_parts, complete_offers):
+    """
+    The test then calls place_order with a default order request, empty stock and default offers
+    Test passes if an order is placed
+    """
+    logger.info("Test criterium 34: Wanneer de kosten van een order onder de approval_limit liggen, wordt het wel besteld")
+    result = app.place_order(basic_order_request, complete_parts, [], complete_offers)
+
+    assert result
+
+
+
 # A class to test the method validate_request
 class TestsValidateRequest:
   @pytest.mark.criterium_6
@@ -1148,8 +1287,6 @@ class TestsValidateRequest:
     """
     Test checks whether the validate_request function returns any issues when a negative amount is requested.
     Test passes if any issue has been raised.
-
-    NOTE: Test currently passes because an erronous issue is raised (see test_case_12), will no longer pass when this is fixed.
     """
     logger.info("Test criterium 16: Wanneer een negatief aantal parts wordt besteld, runt het script niet")
     response = app.validate_request(negative_request, complete_parts)
@@ -1163,8 +1300,6 @@ class TestsValidateRequest:
     """
     Test checks whether the validate_request function returns any issues with a fractional request.
     Test passes if any issue has been raised.
-
-    NOTE: Test currently passes because an erronous issue is raised (see test_case_12), will no longer pass when this is fixed.
     """
     logger.info("Test criterium 17: Wanneer een niet-geheel aantal parts wordt besteld, runt het script niet")
     response = app.validate_request(fractional_request, complete_parts)
@@ -1178,8 +1313,6 @@ class TestsValidateRequest:
     """
     Test checks whether the validate_request function returns any issues with the default parts and order request.
     Test passes if no issue has been raised.
-
-    NOTE: Test currently fails because an erronous issue is raised (see test_case_12/test_case_40), will no longer fail when this is fixed.
     """
     logger.info("Test criterium 18: Wanneer een geheel, niet-negatief aantal parts wordt besteld, runt het script wel\n" \
     "Test criterium 20: Wanneer het gevraagde part van een order overeenkomt met het gevraagde vliegtuigtype, runt het script")
@@ -1319,6 +1452,19 @@ class TestsSelectSupplier:
     result = app.select_supplier(basic_order_request, complete_offers, complete_parts)
 
     assert result.unit_price == cheapest_unit_price
+
+
+  @pytest.mark.criterium_28
+  @pytest.mark.method_select_supplier
+  def test_case_63(self, low_needed_by_request, complete_no_urgent_offers, complete_parts):
+    """
+    Test calls the select_supplier function with an request with low needed_by, and offers with high lead_time.
+    Test passes if the function gives no result
+    """
+    logger.info("Test criterium 28: Wanneer er geen part binnen de needed_by binnen kan komen, wordt het niet besteld")
+    result = app.select_supplier(low_needed_by_request, complete_no_urgent_offers, complete_parts)
+
+    assert not result
     
     
     
@@ -1383,3 +1529,29 @@ class TestsSelectWarehouse:
     result = app.select_warehouse(shelf_life_request, complete_expired_AMS_stock)
 
     assert result == 'far'
+
+
+  @pytest.mark.criterium_28
+  @pytest.mark.method_select_warehouse
+  def test_case_62(self, low_needed_by_request, complete_far_stock):
+    """
+    Test calls the select_warehouse function with an request with low needed_by, and stock from a far warehouse.
+    Test passes if the function gives no result
+    """
+    logger.info("Test criterium 28: Wanneer er geen part binnen de needed_by binnen kan komen, wordt het niet besteld")
+    result = app.select_warehouse(low_needed_by_request, complete_far_stock)
+
+    assert not result
+
+
+  @pytest.mark.criterium_29
+  @pytest.mark.method_select_warehouse
+  def test_case_65(self, basic_order_request, complete_more_far_than_AMS_stock):
+    """
+    The test then calls select_warehouse with a default order request and stock where the far warehouse has more stock than AMS
+    Test passes if result picks the closest (and thus fastest) warehouse
+    """
+    logger.info("Test criterium 29: Wanneer bij meerdere warehouses kan worden besteld, wordt degene met de snelste levering gekozen")
+    result = app.select_warehouse(basic_order_request, complete_more_far_than_AMS_stock)
+
+    assert result == "AMS"
