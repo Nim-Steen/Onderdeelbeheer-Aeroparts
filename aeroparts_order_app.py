@@ -83,9 +83,9 @@ FX_RATES_TO_EUR = {
 PRIORITY_SCORE = { 
     # opgelost BUG: score direction is inconsistent with the rest of the code
     # Intended: higher score = higher priority. 
-    "AOG": 1, 
+    "AOG": 3, 
     "URGENT": 2, 
-    "ROUTINE": 3, 
+    "ROUTINE": 1, 
 } 
  
 APPROVAL_LIMIT_EUR = 25_000 
@@ -108,6 +108,11 @@ def validate_request(req: OrderRequest, parts: Dict[str, Part]) -> List[str]:
     # opgelost BUG: quantity validation is missing for zero/negative and unrealistic values
     if req.quantity > 500: 
         issues.append("Quantity too high for a single request.") 
+    if req.quantity <= 0:
+        issues.append("Cannot order zero or negative quantity")
+    if not isinstance(req.quantity, int):
+        issues.append("Cannot order decimal quantity")
+
  
     # Missing: validate priority values strictly 
     return issues 
