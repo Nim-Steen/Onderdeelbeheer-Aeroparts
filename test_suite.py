@@ -65,6 +65,9 @@ from datetime import datetime, timedelta, UTC
 import pytest
 import random
 import copy
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
@@ -663,7 +666,7 @@ class TestsPlaceOrder:
 
     Test passes if certified has been set to False
     """
-    print("Test criterium 3: Als bij een order met certificering geen onderdeel met certificering beschikbaar is, krijgt de gebruiker hier melding van")
+    logger.info("Test criterium 3: Als bij een order met certificering geen onderdeel met certificering beschikbaar is, krijgt de gebruiker hier melding van")
     result = app.place_order(cert_request, complete_parts, [], complete_no_cert_offers)
 
     certified = True
@@ -685,7 +688,7 @@ class TestsPlaceOrder:
 
     Test passes if in_time has been set to False
     """
-    print("Test criterium 4: Als bij een order met ETA geen onderdeel binnen de ETA beschikbaar is, krijgt de gebruiker hier melding van")
+    logger.info("Test criterium 4: Als bij een order met ETA geen onderdeel binnen de ETA beschikbaar is, krijgt de gebruiker hier melding van")
 
     result = app.place_order(low_needed_by_request, complete_parts, no_AOG_AMS_stock, complete_no_AOG_offers)
 
@@ -707,7 +710,7 @@ class TestsPlaceOrder:
 
     Test passes if expired has been set to True
     """
-    print("Test criterium 5: Als bij een order met vervaldatum geen onderdeel binnen de vervaldatum beschikbaar is, krijgt de gebruiker hier melding van")
+    logger.info("Test criterium 5: Als bij een order met vervaldatum geen onderdeel binnen de vervaldatum beschikbaar is, krijgt de gebruiker hier melding van")
     result = app.place_order(low_needed_by_request, complete_parts, complete_expired_AMS_stock, [])
 
     expired = False
@@ -729,7 +732,7 @@ class TestsPlaceOrder:
 
     Test passes if compatible has been set to False
     """
-    print("test criterium 6: Als bij een order voor een vliegtuig geen onderdeel voor dat vliegtuig beschikbaar is, krijgt de gebruiker hier melding van")
+    logger.info("test criterium 6: Als bij een order voor een vliegtuig geen onderdeel voor dat vliegtuig beschikbaar is, krijgt de gebruiker hier melding van")
     result = app.place_order(incompatible_request, complete_parts, complete_AMS_stock, complete_offers)
 
     compatible = True
@@ -751,7 +754,7 @@ class TestsPlaceOrder:
 
     Test passes if there are no notes.
     """
-    print("Test criterium 7: Als een order zonder problemen kan worden uitgevoerd, krijgt de gebruiker geen errormelding")
+    logger.info("Test criterium 7: Als een order zonder problemen kan worden uitgevoerd, krijgt de gebruiker geen errormelding")
     result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, complete_offers)
 
     assert not result.notes
@@ -767,7 +770,7 @@ class TestsPlaceOrder:
 
     Test passes if the result is an array and more than one option is returned.
     """
-    print("Test criterium 11: Als een order niet door een warehouse kan worden vervuld, worden de verschillende goedgekeurde leveranciers met hun prijzen getoond.")
+    logger.info("Test criterium 11: Als een order niet door een warehouse kan worden vervuld, worden de verschillende goedgekeurde leveranciers met hun prijzen getoond.")
     result = app.place_order(basic_order_request, complete_parts, [], complete_offers)
 
     assert len(result) > 1
@@ -782,7 +785,7 @@ class TestsPlaceOrder:
 
     Test passes if the new_amount is equal to the original_amount minus the requested amount.
     """
-    print("Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.")
+    logger.info("Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.")
     for item in complete_AMS_stock:
       if item.part_no == basic_order_request.part_no:
         original_amount = item.on_hand
@@ -805,7 +808,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with an AOG request, a complete dictionary of parts, and stock and offers that cannot meet the AOG-eta requirement.
     Test passes if no order is placed.
     """
-    print("Test criterium 13: Wanneer een item met AOG-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen een uur leverbaar is")
+    logger.info("Test criterium 13: Wanneer een item met AOG-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen een uur leverbaar is")
     result = app.place_order(AOG_request, complete_parts, no_AOG_AMS_stock, complete_no_AOG_offers)
 
     assert not result
@@ -818,7 +821,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with an AOG request, a complete dictionary of parts, stock that can meet the AOG-eta requirement and offers that cannot.
     Test passes if the order placed has an eta within 1 hour.
     """
-    print("Test criterium 13: Wanneer een item met AOG-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen een uur leverbaar is")
+    logger.info("Test criterium 13: Wanneer een item met AOG-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen een uur leverbaar is")
     result = app.place_order(AOG_request, complete_parts, complete_AMS_stock, complete_no_AOG_offers)
 
     assert result.eta < datetime.now(UTC) + timedelta(hours=1)
@@ -833,7 +836,7 @@ class TestsPlaceOrder:
 
     Test currently passes/fails depending on the price of offers.
     """
-    print("Test criterium 13: Wanneer een item met AOG-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen een uur leverbaar is")
+    logger.info("Test criterium 13: Wanneer een item met AOG-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen een uur leverbaar is")
     result = app.place_order(AOG_request, complete_parts, no_AOG_AMS_stock, complete_offers)
 
     assert result.eta < datetime.now(UTC) + timedelta(hours=1)
@@ -846,7 +849,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with an urgent request, a complete dictionary of parts, and stock and offers that cannot meet the urgent-eta requirement.
     Test passes if no order is placed.
     """
-    print("Test criterium 14: Wanneer een item met urgent-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen vijf dagen leverbaar is")
+    logger.info("Test criterium 14: Wanneer een item met urgent-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen vijf dagen leverbaar is")
     result = app.place_order(urgent_request, complete_parts, no_urgent_AMS_stock, complete_no_urgent_offers)
 
     assert not result
@@ -859,7 +862,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with an urgent request, a complete dictionary of parts, stock that can meet the urgent-eta requirement and offers that cannot.
     Test passes if the order placed has an eta within 5 days.
     """
-    print("Test criterium 14: Wanneer een item met urgent-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen vijf dagen leverbaar is")
+    logger.info("Test criterium 14: Wanneer een item met urgent-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen vijf dagen leverbaar is")
     result = app.place_order(urgent_request, complete_parts, complete_AMS_stock, complete_no_urgent_offers)
 
     assert result.eta < datetime.now(UTC) + timedelta(days=5)
@@ -872,7 +875,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with an urgent request, a complete dictionary of parts, offers that can meet the urgent-eta requirement and stock that cannot.
     Test passes if the order placed has an eta within 5 days.
     """
-    print("Test criterium 14: Wanneer een item met urgent-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen vijf dagen leverbaar is")
+    logger.info("Test criterium 14: Wanneer een item met urgent-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen vijf dagen leverbaar is")
     result = app.place_order(urgent_request, complete_parts, no_urgent_AMS_stock, complete_offers)
 
     assert result.eta < datetime.now(UTC) + timedelta(days=5)
@@ -885,7 +888,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with a routine request, a complete dictionary of parts, and stock and offers that cannot meet the urgent-eta requirement.
     Test passes if an order is placed.
     """
-    print("Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is")
+    logger.info("Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is")
     result = app.place_order(basic_order_request, complete_parts, no_urgent_AMS_stock, complete_no_urgent_offers)
 
     assert result
@@ -898,7 +901,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with an routine request, a complete dictionary of parts, stock that can meet the urgent-eta requirement and offers that cannot.
     Test passes if an order is placed.
     """
-    print("Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is")
+    logger.info("Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is")
     result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, complete_no_urgent_offers)
 
     assert result
@@ -911,7 +914,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with an routine request, a complete dictionary of parts, offers that can meet the urgent-eta requirement and stock that cannot.
     Test passes if an order is placed.
     """
-    print("Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is")
+    logger.info("Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is")
     result = app.place_order(basic_order_request, complete_parts, no_urgent_AMS_stock, complete_offers)
 
     assert result
@@ -924,7 +927,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with a request with a negative quantity, a complete dictionary of parts, and a complete stock and offers.
     Test passes if any Exception is raised.
     """
-    print("Test criterium 16: Wanneer een negatief aantal parts wordt besteld, runt het script niet")
+    logger.info("Test criterium 16: Wanneer een negatief aantal parts wordt besteld, runt het script niet")
     with pytest.raises(Exception):
       app.place_order(negative_request, complete_parts, complete_AMS_stock, complete_offers)
 
@@ -936,7 +939,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with a request with a fractional quantity, a complete dictionary of parts, and a complete stock and offers.
     Test passes if any Exception is raised.
     """
-    print("Test criterium 17: Wanneer een niet-geheel aantal parts wordt besteld, runt het script niet")
+    logger.info("Test criterium 17: Wanneer een niet-geheel aantal parts wordt besteld, runt het script niet")
     with pytest.raises(Exception):
       app.place_order(fractional_request, complete_parts, complete_AMS_stock, complete_offers)
 
@@ -949,7 +952,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with a request with a positive, whole quantity, a complete dictionary of parts, and a complete stock and offers.
     Test passes if an order is returned.
     """
-    print("Test criterium 18: Wanneer een geheel, niet-negatief aantal parts wordt besteld, runt het script wel")
+    logger.info("Test criterium 18: Wanneer een geheel, niet-negatief aantal parts wordt besteld, runt het script wel")
     result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, complete_offers)
 
     assert result
@@ -962,7 +965,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with a request with an incompatible part, a complete dictionary of parts, and a complete stock and offers.
     Test passes if any Exception is raised.
     """
-    print("Test criterium 19: Wanneer het gevraagde part van een order niet overeenkomt met het gevraagde vliegtuigtype, runt het script niet")
+    logger.info("Test criterium 19: Wanneer het gevraagde part van een order niet overeenkomt met het gevraagde vliegtuigtype, runt het script niet")
     with pytest.raises(Exception):
       app.place_order(incompatible_request, complete_parts, complete_AMS_stock, complete_offers)
 
@@ -974,7 +977,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with a request with a compatible part, a complete dictionary of parts, and a complete stock and offers.
     Test passes if an order is returned.
     """
-    print("Test criterium 20: Wanneer het gevraagde part van een order overeenkomt met het gevraagde vliegtuigtype, runt het script")
+    logger.info("Test criterium 20: Wanneer het gevraagde part van een order overeenkomt met het gevraagde vliegtuigtype, runt het script")
     result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, complete_offers)
 
     assert result
@@ -990,7 +993,7 @@ class TestsPlaceOrder:
 
     Test passes if the intended_cost is equal to the total_cost_eur in the result from place_order, both rounded to 3 decimals to avoid rounding errors
     """
-    print("Test criterium 21: Wanneer een part in USD wordt besteld, wordt de prijs correct naar EUR converteerd")
+    logger.info("Test criterium 21: Wanneer een part in USD wordt besteld, wordt de prijs correct naar EUR converteerd")
     for item in only_USD_offers:
       if item.part_no == basic_order_request.part_no:
         price_per_item = item.unit_price
@@ -1014,7 +1017,7 @@ class TestsPlaceOrder:
 
     Test passes if the intended_cost is equal to the total_cost_eur in the result from place_order, both rounded to 3 decimals to avoid rounding errors
     """
-    print("Test criterium 22: Wanneer een part in EUR wordt besteld, wordt de prijs niet geconverteerd")
+    logger.info("Test criterium 22: Wanneer een part in EUR wordt besteld, wordt de prijs niet geconverteerd")
     for item in only_EUR_offers:
       if item.part_no == basic_order_request.part_no:
         price_per_item = item.unit_price
