@@ -1229,6 +1229,8 @@ class TestClassUnitSelectSupplier:
     """
     print("Test criterium 2: Als bij een AOG-order de bestelling boven de ETA zit, wordt deze niet besteld")
     result = app.select_supplier(AOG_request, complete_no_AOG_offers, complete_parts)
+
+    assert not result
     
     
   @pytest.mark.criterium_8
