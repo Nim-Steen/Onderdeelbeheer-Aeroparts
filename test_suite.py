@@ -1099,6 +1099,27 @@ class TestsPlaceOrder:
     assert result.total_cost_eur in intended_cost
 
 
+  @pytest.mark.criterium_30
+  @pytest.mark.method_place_order
+  def test_case_57(self, basic_order_request, complete_offers, complete_parts):
+    """
+    Test filters the offers list to only the ones for the correct part.
+    It then saves the cheapest offer in a variable by iterating through the options and adjusting the cheapest offer if a cheaper one is found.
+    Then it runs place_order with an empty warehouse list, and compares the chosen supplier to the cheapest one.
+
+    Test passes if the cheapest one is chosen. 
+    """
+    logger.info("Test criterium 30: Wanneer bij meerdere suppliers kan worden besteld, wordt degene met de laagste prijs gekozen")
+    relevant_offers = [offer for offer in complete_offers if basic_order_request.part_no == offer.part_no]
+    cheapest_offer = relevant_offers[0]
+    for offer in relevant_offers:
+      if offer.unit_price < cheapest_offer.unit_price:
+        cheapest_offer = offer
+
+    result = app.place_order(basic_order_request, complete_parts, [], complete_offers)
+
+    assert result.source == cheapest_offer.supplier
+
 
 # A class to test the method validate_request
 class TestsValidateRequest:
@@ -1281,6 +1302,23 @@ class TestsSelectSupplier:
     result = app.select_supplier(cert_request, complete_no_cert_offers, complete_parts)
 
     assert not result
+
+
+  @pytest.mark.criterium_30
+  @pytest.mark.method_select_supplier
+  def test_case_56(self, basic_order_request, complete_offers, complete_parts):
+    """
+    Test first determines the cheapest price the part in the request is offered for.
+    It then runs select_supplier, and tests the chosen price.
+
+    Test passes if the price in the return is equal to the cheapest unit price. 
+    """
+    logger.info("Test criterium 30: Wanneer bij meerdere suppliers kan worden besteld, wordt degene met de laagste prijs gekozen")
+    cheapest_unit_price = min(offer.unit_price for offer in complete_offers if offer.part_no == basic_order_request.part_no)
+
+    result = app.select_supplier(basic_order_request, complete_offers, complete_parts)
+
+    assert result.unit_price == cheapest_unit_price
     
     
     
