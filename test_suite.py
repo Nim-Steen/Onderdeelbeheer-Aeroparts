@@ -57,7 +57,8 @@ Qua organisatie is nu mijn idee om een class te maken per functie die getest moe
 Dan kan in de class de relevante variabelen al gedefiniëerd worden, en eventueel in de test zelf nog worden aangepast. 
 Maar dit is pas een eerste opzet en misschien niet de beste manier om dit aan te pakken. 
 
-Voor verdere context in de log kun je print statements in je tests toevoegen, alles wat geprint wordt, zal in de log worden geschreven. 
+Voor verdere context in de log kun je logger.info statements in je tests toevoegen, alles in die statements, zal in de log worden geschreven. 
+Print statements zul je wel in de terminal zien voor debugging van je test, maar komen niet in de log terecht.
 """
 
 import aeroparts_order_app as app
@@ -424,7 +425,7 @@ class TestsDeductStock:
 
     Test passes if the new stock is equal to the original stock minus the requested quantity
     """
-    print("Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.")
+    logger.info("Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.")
 
     part_no = basic_order_request.part_no
     quantity = basic_order_request.quantity
@@ -453,7 +454,7 @@ class TestsDeductStock:
 
     Test passes if the new stock is equal to the original AMS stock minus the requested quantity, and the original far stock hasn't changed
     """
-    print("Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.")
+    logger.info("Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.")
 
     part_no = basic_order_request.part_no
     quantity = basic_order_request.quantity
@@ -491,7 +492,7 @@ class TestsDeductStock:
 
     Test passes if the new stock is equal to the original AMS stock minus the requested quantity, and the original other stock hasn't changed
     """
-    print("Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.")
+    logger.info("Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.")
 
     part_no = basic_order_request.part_no
     quantity = basic_order_request.quantity
@@ -539,7 +540,7 @@ class TestsCalculateTotalCostsEur:
 
     Test passes if the intended_cost is equal to the result of the function, both rounded to 3 decimals to avoid rounding errors
     """
-    print("Test criterium 21: Wanneer een part in USD wordt besteld, wordt de prijs correct naar EUR converteerd")
+    logger.info("Test criterium 21: Wanneer een part in USD wordt besteld, wordt de prijs correct naar EUR converteerd")
     for item in only_USD_offers:
       if item.part_no == basic_order_request.part_no:
         price_per_item = item.unit_price
@@ -564,7 +565,7 @@ class TestsCalculateTotalCostsEur:
 
     Test passes if the intended_cost is equal to the result of the function, both rounded to 3 decimals to avoid rounding errors
     """
-    print("Test criterium 22: Wanneer een part in EUR wordt besteld, wordt de prijs niet geconverteerd")
+    logger.info("Test criterium 22: Wanneer een part in EUR wordt besteld, wordt de prijs niet geconverteerd")
     for item in only_EUR_offers:
       if item.part_no == basic_order_request.part_no:
         price_per_item = item.unit_price
@@ -587,7 +588,7 @@ class TestsCalculateTotalCostsEur:
 
     Test passes if the intended_cost is equal to the result of the function, both rounded to 3 decimals.
     """
-    print("Test criterium 24: De kosten van een part uit de warehouse wordt met 3 decimalen na de komma (of zoveel als relevant) weergegeven")
+    logger.info("Test criterium 24: De kosten van een part uit de warehouse wordt met 3 decimalen na de komma (of zoveel als relevant) weergegeven")
     intended_cost = basic_order_request.quantity * 15.0
 
     result = app.calculate_total_cost_eur("WAREHOUSE", basic_order_request, None)
@@ -607,7 +608,7 @@ class TestsCalculateTotalCostsEur:
     Test passes if the result is the intended costs equal the results from the function
     NOTE: This doesn't only test the rounding, it is also dependent on test cases 46 and 49
     """
-    print("Test criterium 25: De kosten van een part van een supplier wordt met 3 decimalen na de komma weergegeven")
+    logger.info("Test criterium 25: De kosten van een part van een supplier wordt met 3 decimalen na de komma weergegeven")
     price_per_item = []
     offers = []
     for item in complete_offers:
@@ -639,7 +640,7 @@ class TestsGenerateOrderId:
 
     The test passes if duplicate_id is not set to True. 
     """
-    print("Test criterium 23: Als veel items in dezelfde seconde worden besteld, hebben ze ieder een uniek ordernummer")
+    logger.info("Test criterium 23: Als veel items in dezelfde seconde worden besteld, hebben ze ieder een uniek ordernummer")
     order_ids = []
     duplicate_id = False
     for _ in range(20):
@@ -1040,7 +1041,7 @@ class TestsPlaceOrder:
 
     The test passes if duplicate_id is not set to True. 
     """
-    print("Test criterium 23: Als veel items in dezelfde seconde worden besteld, hebben ze ieder een uniek ordernummer")
+    logger.info("Test criterium 23: Als veel items in dezelfde seconde worden besteld, hebben ze ieder een uniek ordernummer")
     order_ids = []
     duplicate_id = False
     for _ in range(20):
@@ -1063,7 +1064,7 @@ class TestsPlaceOrder:
 
     Test passes if the intended_cost is equal to the total_cost_eur in the result from place_order, both rounded to 3 decimals.
     """
-    print("Test criterium 24: De kosten van een part uit de warehouse wordt met 3 decimalen na de komma (of zoveel als relevant) weergegeven")
+    logger.info("Test criterium 24: De kosten van een part uit de warehouse wordt met 3 decimalen na de komma (of zoveel als relevant) weergegeven")
     intended_cost = basic_order_request.quantity * 15.0
 
     result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, [])
@@ -1082,7 +1083,7 @@ class TestsPlaceOrder:
     Test passes if the total_cost_eur in the result from place_order is any of the prices in intended_costs
     NOTE: This doesn't only test the rounding, it is also dependent on test cases 46 and 49
     """
-    print("Test criterium 25: De kosten van een part van een supplier wordt met 3 decimalen na de komma weergegeven")
+    logger.info("Test criterium 25: De kosten van een part van een supplier wordt met 3 decimalen na de komma weergegeven")
     price_per_item = []
     for item in complete_offers:
       if item.part_no == basic_order_request.part_no:
@@ -1108,7 +1109,7 @@ class TestsValidateRequest:
     It then checks all issues raised by validate_request using an incompatible request and sets compatible to False if an issue contains "not compatible"
     Test passes if compatible has been set to False
     """
-    print("Test criterium 6: Als bij een order voor een vliegtuig geen onderdeel voor dat vliegtuig beschikbaar is, krijgt de gebruiker hier melding van")
+    logger.info("Test criterium 6: Als bij een order voor een vliegtuig geen onderdeel voor dat vliegtuig beschikbaar is, krijgt de gebruiker hier melding van")
     response = app.validate_request(incompatible_request, complete_parts)
 
     compatible = True
@@ -1129,7 +1130,7 @@ class TestsValidateRequest:
 
     NOTE: Test currently passes because an erronous issue is raised (see test_case_12), will no longer pass when this is fixed.
     """
-    print("Test criterium 16: Wanneer een negatief aantal parts wordt besteld, runt het script niet")
+    logger.info("Test criterium 16: Wanneer een negatief aantal parts wordt besteld, runt het script niet")
     response = app.validate_request(negative_request, complete_parts)
 
     assert response
@@ -1144,7 +1145,7 @@ class TestsValidateRequest:
 
     NOTE: Test currently passes because an erronous issue is raised (see test_case_12), will no longer pass when this is fixed.
     """
-    print("Test criterium 17: Wanneer een niet-geheel aantal parts wordt besteld, runt het script niet")
+    logger.info("Test criterium 17: Wanneer een niet-geheel aantal parts wordt besteld, runt het script niet")
     response = app.validate_request(fractional_request, complete_parts)
 
     assert response
@@ -1159,7 +1160,7 @@ class TestsValidateRequest:
 
     NOTE: Test currently fails because an erronous issue is raised (see test_case_12/test_case_40), will no longer fail when this is fixed.
     """
-    print("Test criterium 18: Wanneer een geheel, niet-negatief aantal parts wordt besteld, runt het script wel\n" \
+    logger.info("Test criterium 18: Wanneer een geheel, niet-negatief aantal parts wordt besteld, runt het script wel\n" \
     "Test criterium 20: Wanneer het gevraagde part van een order overeenkomt met het gevraagde vliegtuigtype, runt het script")
     response = app.validate_request(basic_order_request, complete_parts)
 
@@ -1173,7 +1174,7 @@ class TestsValidateRequest:
     Test checks whether the validate_request function returns any issues with an incompatible request.
     Test passes if any issue has been raised.
     """
-    print("Test criterium 19: Wanneer het gevraagde part van een order niet overeenkomt met het gevraagde vliegtuigtype, runt het script niet")
+    logger.info("Test criterium 19: Wanneer het gevraagde part van een order niet overeenkomt met het gevraagde vliegtuigtype, runt het script niet")
     response = app.validate_request(incompatible_request, complete_parts)
 
     assert response
@@ -1190,7 +1191,7 @@ class TestsToEur:
     Test then compares the result to the intended result (amount * 0.92), each rounded to 3 decimals to avoid rounding errors
     Test passes if the result is equal to the amount * 0.92
     """
-    print("Test criterium 21: Wanneer een part in USD wordt besteld, wordt de prijs correct naar EUR converteerd")
+    logger.info("Test criterium 21: Wanneer een part in USD wordt besteld, wordt de prijs correct naar EUR converteerd")
     amount = random.randint(1,100000)/100
     currency = "USD"
     converted_amount = app.to_eur(amount, currency)
@@ -1206,7 +1207,7 @@ class TestsToEur:
     Test then compares the result to the intended result (amount), each rounded to 3 decimals to avoid rounding errors
     Test passes if the result is equal to the original amount. 
     """
-    print("Test criterium 22: Wanneer een part in EUR wordt besteld, wordt de prijs niet geconverteerd")
+    logger.info("Test criterium 22: Wanneer een part in EUR wordt besteld, wordt de prijs niet geconverteerd")
     amount = random.randint(1,100000)/100
     currency = "EUR"
     converted_amount = app.to_eur(amount, currency)
@@ -1224,7 +1225,7 @@ class TestsSelectSupplier:
     Test calls the select_supplier method with and AOG-request, complete offers and complete parts.
     Test passes if the lead_time_days of the resulting offer is 0
     """
-    print("Test criterium 1: Als bij een AOG-order de bestelling onder de ETA zit, wordt deze besteld")
+    logger.info("Test criterium 1: Als bij een AOG-order de bestelling onder de ETA zit, wordt deze besteld")
     result = app.select_supplier(AOG_request, complete_offers, complete_parts)
 
     assert result.lead_time_days == 0
@@ -1237,7 +1238,7 @@ class TestsSelectSupplier:
     Test calls the select_supplier method with an AOG-request, offers that don't meet AOG and complete parts.
     Test passes if the function gives no result.
     """
-    print("Test criterium 2: Als bij een AOG-order de bestelling boven de ETA zit, wordt deze niet besteld")
+    logger.info("Test criterium 2: Als bij een AOG-order de bestelling boven de ETA zit, wordt deze niet besteld")
     result = app.select_supplier(AOG_request, complete_no_AOG_offers, complete_parts)
 
     assert not result
@@ -1250,7 +1251,7 @@ class TestsSelectSupplier:
     Test calls the select_supplier method with a request for a certified part, offers with certification and complete parts.
     Test passes if the function gives a certified result
     """
-    print("Test criterium 8: Als een order certificering nodig heeft en er is er een met certificering beschikbaar, dan wordt er een onderdeel met certificering besteld")
+    logger.info("Test criterium 8: Als een order certificering nodig heeft en er is er een met certificering beschikbaar, dan wordt er een onderdeel met certificering besteld")
     result = app.select_supplier(cert_request, complete_offers, complete_parts)
 
     assert result.certified
@@ -1263,7 +1264,7 @@ class TestsSelectSupplier:
     Test calls the select_supplier method with a request for a certified part, offers with certification and no certification but cheaper and complete parts.
     Test passes if the function gives a certified result
     """
-    print("Test criterium 8: Als een order certificering nodig heeft en er is er een met certificering beschikbaar, dan wordt er een onderdeel met certificering besteld")
+    logger.info("Test criterium 8: Als een order certificering nodig heeft en er is er een met certificering beschikbaar, dan wordt er een onderdeel met certificering besteld")
     result = app.select_supplier(cert_request, complete_cert_and_no_cert_offers, complete_parts)
 
     assert result.certified
@@ -1276,7 +1277,7 @@ class TestsSelectSupplier:
     Test calls the select_supplier method with a request for a certified part, offers with no certification and complete parts.
     Test passes if the function gives result
     """
-    print("Test criterium 9: Als een order certificering nodig heeft en er is er geen met certificering beschikbaar, dan wordt er niks besteld")
+    logger.info("Test criterium 9: Als een order certificering nodig heeft en er is er geen met certificering beschikbaar, dan wordt er niks besteld")
     result = app.select_supplier(cert_request, complete_no_cert_offers, complete_parts)
 
     assert not result
@@ -1292,7 +1293,7 @@ class TestsSelectWarehouse:
     Test calls the select_warehouse function with an AOG request and the regular AMS stock.
     Test passes if the function gives a result. 
     """
-    print("Test criterium 1: Als bij een AOG-order de bestelling onder de ETA zit, wordt deze besteld")
+    logger.info("Test criterium 1: Als bij een AOG-order de bestelling onder de ETA zit, wordt deze besteld")
     result = app.select_warehouse(AOG_request, complete_AMS_stock)
 
     assert result
@@ -1305,7 +1306,7 @@ class TestsSelectWarehouse:
     Test calls the select_warehouse function with an AOG request with past needed_by, and the regular AMS stock.
     Test passes if the function gives no result. 
     """
-    print("Test criterium 2: Als bij een AOG-order de bestelling boven de ETA zit, wordt deze niet besteld")
+    logger.info("Test criterium 2: Als bij een AOG-order de bestelling boven de ETA zit, wordt deze niet besteld")
     result = app.select_warehouse(past_needed_by_request, complete_AMS_stock)
 
     assert not result
@@ -1318,7 +1319,7 @@ class TestsSelectWarehouse:
     Test calls the select_warehouse function with an request with a shelf life, and expired AMS stock.
     Test passes if the function gives no result
     """
-    print("Test criterium 10: Als een order een vervaldatum heeft, wordt er een onderdeel binnen de vervaldatum, of niks, besteld")
+    logger.info("Test criterium 10: Als een order een vervaldatum heeft, wordt er een onderdeel binnen de vervaldatum, of niks, besteld")
     result = app.select_warehouse(shelf_life_request, complete_expired_AMS_stock)
 
     assert not result
@@ -1331,7 +1332,7 @@ class TestsSelectWarehouse:
     Test calls the select_warehouse function with an request with a shelf life, and expired AMS stock, met 1 niet-expired part in de far stock.
     Test passes if the item from the far stock is chosen
     """
-    print("Test criterium 10: Als een order een vervaldatum heeft, wordt er een onderdeel binnen de vervaldatum, of niks, besteld")
+    logger.info("Test criterium 10: Als een order een vervaldatum heeft, wordt er een onderdeel binnen de vervaldatum, of niks, besteld")
     far_item = app.StockItem(
       part_no = shelf_life_request.part_no,
       warehouse = "far", 
