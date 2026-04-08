@@ -1,114 +1,163 @@
-Test run at 03/04/2026 14:20:59
+Test run at 08/04/2026 11:47:05
 ________________________________________________________________________________
-________________________________________________________________________________
+TestsSelectSupplier.test_case_17 	 call passed 
+Test criterium 9: Als een order certificering nodig heeft en er is er geen met certificering beschikbaar, dan wordt er niks besteld
 
-
-Test run at 03/04/2026 14:24:43
-________________________________________________________________________________
 ________________________________________________________________________________
 
 
-Test run at 03/04/2026 14:25:16
+Test run at 08/04/2026 11:51:03
 ________________________________________________________________________________
-TestClassSystem.test_case_06 	 call failed 
-Test criterium 3: Als bij een order met certificering geen onderdeel met certificering beschikbaar is, krijgt de gebruiker hier melding van
-
-TestClassSystem.test_case_09 	 call passed 
-Test criterium 4: Als bij een order met ETA geen onderdeel binnen de ETA beschikbaar is, krijgt de gebruiker hier melding van
-
-TestClassSystem.test_case_11 	 call failed 
-Test criterium 5: Als bij een order met vervaldatum geen onderdeel binnen de vervaldatum beschikbaar is, krijgt de gebruiker hier melding van
-
-TestClassSystem.test_case_13 	 call passed 
-test criterium 6: Als bij een order voor een vliegtuig geen onderdeel voor dat vliegtuig beschikbaar is, krijgt de gebruiker hier melding van
-
-TestClassSystem.test_case_14 	 call passed 
-Test criterium 7: Als een order zonder problemen kan worden uitgevoerd, krijgt de gebruiker geen errormelding
-
-TestClassSystem.test_case_20 	 call failed 
-Test criterium 11: Als een order niet door een warehouse kan worden vervuld, worden de verschillende goedgekeurde leveranciers met hun prijzen getoond.
-
-TestClassSystem.test_case_24 	 call failed 
+TestsDeductStock.test_case_21 	 call failed 
 Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.
 
-TestClassSystem.test_case_25 	 call failed 
-Test criterium 13: Wanneer een item met AOG-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen een uur leverbaar is
+TestsDeductStock.test_case_22 	 call failed 
+Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.
 
-TestClassSystem.test_case_26 	 call passed 
-Test criterium 13: Wanneer een item met AOG-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen een uur leverbaar is
+TestsDeductStock.test_case_23 	 call failed 
+Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.
 
-TestClassSystem.test_case_27 	 call failed 
-Test criterium 13: Wanneer een item met AOG-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen een uur leverbaar is
-
-TestClassSystem.test_case_28 	 call failed 
-Test criterium 14: Wanneer een item met urgent-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen vijf dagen leverbaar is
-
-TestClassSystem.test_case_29 	 call passed 
-Test criterium 14: Wanneer een item met urgent-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen vijf dagen leverbaar is
-
-TestClassSystem.test_case_30 	 call passed 
-Test criterium 14: Wanneer een item met urgent-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen vijf dagen leverbaar is
-
-TestClassSystem.test_case_31 	 call passed 
-Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is
-
-TestClassSystem.test_case_32 	 call passed 
-Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is
-
-TestClassSystem.test_case_33 	 call passed 
-Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is
-
-TestClassSystem.test_case_35 	 call failed 
-Test criterium 16: Wanneer een negatief aantal parts wordt besteld, runt het script niet
-
-TestClassSystem.test_case_37 	 call failed 
-Test criterium 17: Wanneer een niet-geheel aantal parts wordt besteld, runt het script niet
-
-TestClassSystem.test_case_39 	 call passed 
-Test criterium 18: Wanneer een geheel, niet-negatief aantal parts wordt besteld, runt het script wel
-
-TestClassSystem.test_case_41 	 call failed 
-Test criterium 19: Wanneer het gevraagde part van een order niet overeenkomt met het gevraagde vliegtuigtype, runt het script niet
-
-TestClassSystem.test_case_43 	 call passed 
-Test criterium 20: Wanneer het gevraagde part van een order overeenkomt met het gevraagde vliegtuigtype, runt het script
-
-TestClassSystem.test_case_46 	 call failed 
+TestsCalculateTotalCostsEur.test_case_45 	 call failed 
 Test criterium 21: Wanneer een part in USD wordt besteld, wordt de prijs correct naar EUR converteerd
 
-TestClassSystem.test_case_49 	 call failed 
+TestsCalculateTotalCostsEur.test_case_48 	 call failed 
 Test criterium 22: Wanneer een part in EUR wordt besteld, wordt de prijs niet geconverteerd
 
-TestClassSystem.test_case_51 	 call failed 
-Test criterium 23: Als veel items in dezelfde seconde worden besteld, hebben ze ieder een uniek ordernummer
-
-TestClassSystem.test_case_53 	 call passed 
+TestsCalculateTotalCostsEur.test_case_52 	 call passed 
 Test criterium 24: De kosten van een part uit de warehouse wordt met 3 decimalen na de komma (of zoveel als relevant) weergegeven
 
-TestClassSystem.test_case_55 	 call failed 
+TestsCalculateTotalCostsEur.test_case_54 	 call failed 
 Test criterium 25: De kosten van een part van een supplier wordt met 3 decimalen na de komma weergegeven
 
-TestClassUnitValidateRequest.test_case_12 	 call passed 
-Test criterium 6: Als bij een order voor een vliegtuig geen onderdeel voor dat vliegtuig beschikbaar is, krijgt de gebruiker hier melding van
+TestsGenerateOrderId.test_case_50 	 call failed 
+Test criterium 23: Als veel items in dezelfde seconde worden besteld, hebben ze ieder een uniek ordernummer
 
-TestClassUnitValidateRequest.test_case_34 	 call failed 
+TestsPlaceOrder.test_case_06 	 call failed 
+Test criterium 3: Als bij een order met certificering geen onderdeel met certificering beschikbaar is, krijgt de gebruiker hier melding van
+
+TestsPlaceOrder.test_case_09 	 call passed 
+Test criterium 4: Als bij een order met ETA geen onderdeel binnen de ETA beschikbaar is, krijgt de gebruiker hier melding van
+
+TestsPlaceOrder.test_case_11 	 call failed 
+Test criterium 5: Als bij een order met vervaldatum geen onderdeel binnen de vervaldatum beschikbaar is, krijgt de gebruiker hier melding van
+
+TestsPlaceOrder.test_case_13 	 call passed 
+test criterium 6: Als bij een order voor een vliegtuig geen onderdeel voor dat vliegtuig beschikbaar is, krijgt de gebruiker hier melding van
+
+TestsPlaceOrder.test_case_14 	 call passed 
+Test criterium 7: Als een order zonder problemen kan worden uitgevoerd, krijgt de gebruiker geen errormelding
+
+TestsPlaceOrder.test_case_20 	 call failed 
+Test criterium 11: Als een order niet door een warehouse kan worden vervuld, worden de verschillende goedgekeurde leveranciers met hun prijzen getoond.
+
+TestsPlaceOrder.test_case_24 	 call failed 
+Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.
+
+TestsPlaceOrder.test_case_25 	 call failed 
+Test criterium 13: Wanneer een item met AOG-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen een uur leverbaar is
+
+TestsPlaceOrder.test_case_26 	 call passed 
+Test criterium 13: Wanneer een item met AOG-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen een uur leverbaar is
+
+TestsPlaceOrder.test_case_27 	 call passed 
+Test criterium 13: Wanneer een item met AOG-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen een uur leverbaar is
+
+TestsPlaceOrder.test_case_28 	 call failed 
+Test criterium 14: Wanneer een item met urgent-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen vijf dagen leverbaar is
+
+TestsPlaceOrder.test_case_29 	 call passed 
+Test criterium 14: Wanneer een item met urgent-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen vijf dagen leverbaar is
+
+TestsPlaceOrder.test_case_30 	 call failed 
+Test criterium 14: Wanneer een item met urgent-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen vijf dagen leverbaar is
+
+TestsPlaceOrder.test_case_31 	 call passed 
+Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is
+
+TestsPlaceOrder.test_case_32 	 call passed 
+Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is
+
+TestsPlaceOrder.test_case_33 	 call passed 
+Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is
+
+TestsPlaceOrder.test_case_35 	 call failed 
 Test criterium 16: Wanneer een negatief aantal parts wordt besteld, runt het script niet
 
-TestClassUnitValidateRequest.test_case_36 	 call failed 
+TestsPlaceOrder.test_case_37 	 call failed 
 Test criterium 17: Wanneer een niet-geheel aantal parts wordt besteld, runt het script niet
 
-TestClassUnitValidateRequest.test_case_38_and_42 	 call passed 
+TestsPlaceOrder.test_case_39 	 call passed 
+Test criterium 18: Wanneer een geheel, niet-negatief aantal parts wordt besteld, runt het script wel
+
+TestsPlaceOrder.test_case_41 	 call failed 
+Test criterium 19: Wanneer het gevraagde part van een order niet overeenkomt met het gevraagde vliegtuigtype, runt het script niet
+
+TestsPlaceOrder.test_case_43 	 call passed 
+Test criterium 20: Wanneer het gevraagde part van een order overeenkomt met het gevraagde vliegtuigtype, runt het script
+
+TestsPlaceOrder.test_case_46 	 call failed 
+Test criterium 21: Wanneer een part in USD wordt besteld, wordt de prijs correct naar EUR converteerd
+
+TestsPlaceOrder.test_case_49 	 call failed 
+Test criterium 22: Wanneer een part in EUR wordt besteld, wordt de prijs niet geconverteerd
+
+TestsPlaceOrder.test_case_51 	 call failed 
+Test criterium 23: Als veel items in dezelfde seconde worden besteld, hebben ze ieder een uniek ordernummer
+
+TestsPlaceOrder.test_case_53 	 call passed 
+Test criterium 24: De kosten van een part uit de warehouse wordt met 3 decimalen na de komma (of zoveel als relevant) weergegeven
+
+TestsPlaceOrder.test_case_55 	 call failed 
+Test criterium 25: De kosten van een part van een supplier wordt met 3 decimalen na de komma weergegeven
+
+TestsValidateRequest.test_case_12 	 call passed 
+Test criterium 6: Als bij een order voor een vliegtuig geen onderdeel voor dat vliegtuig beschikbaar is, krijgt de gebruiker hier melding van
+
+TestsValidateRequest.test_case_34 	 call passed 
+Test criterium 16: Wanneer een negatief aantal parts wordt besteld, runt het script niet
+
+TestsValidateRequest.test_case_36 	 call passed 
+Test criterium 17: Wanneer een niet-geheel aantal parts wordt besteld, runt het script niet
+
+TestsValidateRequest.test_case_38_and_42 	 call passed 
 Test criterium 18: Wanneer een geheel, niet-negatief aantal parts wordt besteld, runt het script wel
 Test criterium 20: Wanneer het gevraagde part van een order overeenkomt met het gevraagde vliegtuigtype, runt het script
 
-TestClassUnitValidateRequest.test_case_40 	 call passed 
+TestsValidateRequest.test_case_40 	 call passed 
 Test criterium 19: Wanneer het gevraagde part van een order niet overeenkomt met het gevraagde vliegtuigtype, runt het script niet
 
-TestClassUnitToEur.test_case_44 	 call failed 
+TestsToEur.test_case_44 	 call failed 
 Test criterium 21: Wanneer een part in USD wordt besteld, wordt de prijs correct naar EUR converteerd
 
-TestClassUnitToEur.test_case_47 	 call passed 
+TestsToEur.test_case_47 	 call passed 
 Test criterium 22: Wanneer een part in EUR wordt besteld, wordt de prijs niet geconverteerd
+
+TestsSelectSupplier.test_case_02 	 call passed 
+Test criterium 1: Als bij een AOG-order de bestelling onder de ETA zit, wordt deze besteld
+
+TestsSelectSupplier.test_case_04 	 call failed 
+Test criterium 2: Als bij een AOG-order de bestelling boven de ETA zit, wordt deze niet besteld
+
+TestsSelectSupplier.test_case_15 	 call passed 
+Test criterium 8: Als een order certificering nodig heeft en er is er een met certificering beschikbaar, dan wordt er een onderdeel met certificering besteld
+
+TestsSelectSupplier.test_case_16 	 call passed 
+Test criterium 8: Als een order certificering nodig heeft en er is er een met certificering beschikbaar, dan wordt er een onderdeel met certificering besteld
+
+TestsSelectSupplier.test_case_17 	 call passed 
+Test criterium 9: Als een order certificering nodig heeft en er is er geen met certificering beschikbaar, dan wordt er niks besteld
+
+TestsSelectWarehouse.test_case_01 	 call passed 
+Test criterium 1: Als bij een AOG-order de bestelling onder de ETA zit, wordt deze besteld
+
+TestsSelectWarehouse.test_case_03 	 call failed 
+Test criterium 2: Als bij een AOG-order de bestelling boven de ETA zit, wordt deze niet besteld
+
+TestsSelectWarehouse.test_case_18 	 call failed 
+Test criterium 10: Als een order een vervaldatum heeft, wordt er een onderdeel binnen de vervaldatum, of niks, besteld
+
+TestsSelectWarehouse.test_case_19 	 call failed 
+Test criterium 10: Als een order een vervaldatum heeft, wordt er een onderdeel binnen de vervaldatum, of niks, besteld
 
 ________________________________________________________________________________
 
