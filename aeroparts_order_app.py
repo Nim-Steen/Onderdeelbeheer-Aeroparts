@@ -160,17 +160,18 @@ def deduct_stock(stock: List[StockItem], part_no: str, warehouse: str, qty: int)
  
 def select_supplier(req: OrderRequest, offers: List[SupplierOffer], parts: Dict[str, Part]) -> Optional[SupplierOffer]: 
     part = parts[req.part_no] 
-    valid = [o for o in offers if o.part_no == req.part_no] 
- 
-    # BUG: certification requirement is ignored. 
-    # Intended: if part.requires_certificate, only allow o.certified == True. 
- 
-    if not valid: 
-        return None 
- 
-    # BUG: chooses highest price (reverse sorting). 
-    valid = sorted(valid, key=lambda o: o.unit_price, reverse=True) 
-    return valid[0] 
+    valid = [o for o in offers if o.part_no == req.part_no]
+
+    # Blokkeer niet-gecertificeerde leveranciers als een certificaat verplicht is
+    if part.requires_certificate:
+        valid = [o for o in valid if o.certified]
+
+    if not valid:
+        return None
+
+    # Sorteer op laagste prijs (goedkoopste optie eerst)
+    valid = sorted(valid, key=lambda o: o.unit_price) 
+    return valid[0]
  
  
 def estimate_eta_from_supplier(offer: SupplierOffer, req: OrderRequest) -> datetime: 
