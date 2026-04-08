@@ -408,6 +408,7 @@ def only_EUR_offers(complete_offers):
   return complete_offers
 
 
+
 # A class to test the method deduct_stock
 class TestsDeductStock:
   @pytest.mark.criterium_12
@@ -520,6 +521,9 @@ class TestsDeductStock:
         compare_other_stock == False
 
     assert compare_other_stock and new_stock == original_stock - quantity
+
+
+
 # A class to test the method calculate_total_cost_eur
 class TestsCalculateTotalCostsEur:
   @pytest.mark.criterium_21
@@ -617,6 +621,7 @@ class TestsCalculateTotalCostsEur:
       result.append(app.calculate_total_cost_eur("SUPPLIER", basic_order_request, offer))
 
     assert result == intended_cost
+
 
 
 # A class to test the method generate_order_id
@@ -1090,6 +1095,7 @@ class TestsPlaceOrder:
     assert result.total_cost_eur in intended_cost
 
 
+
 # A class to test the method validate_request
 class TestsValidateRequest:
   @pytest.mark.criterium_6
@@ -1170,6 +1176,7 @@ class TestsValidateRequest:
     assert response
 
 
+
 # A class to test the method to_eur
 class TestsToEur:
   @pytest.mark.criterium_21
@@ -1206,7 +1213,7 @@ class TestsToEur:
 
 
 # A class to test the method select_supplier
-class TestClassUnitSelectSupplier:
+class TestsSelectSupplier:
   @pytest.mark.criterium_1
   @pytest.mark.method_select_supplier
   def test_case_02(self, AOG_request, complete_offers, complete_parts):
@@ -1272,8 +1279,9 @@ class TestClassUnitSelectSupplier:
     assert not result
     
     
+    
 # A class to test the method select_warehouse
-class TestClassUnitSelectWarehouse:
+class TestsSelectWarehouse:
   @pytest.mark.criterium_1
   @pytest.mark.method_select_warehouse
   def test_case_01(self, AOG_request, complete_AMS_stock):
