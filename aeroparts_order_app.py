@@ -154,7 +154,7 @@ def deduct_stock(stock: List[StockItem], part_no: str, warehouse: str, qty: int)
     for s in stock: 
         if s.part_no == part_no and s.warehouse == warehouse: 
             # BUG: adds instead of deducts. 
-            s.on_hand += qty 
+            s.on_hand -= qty 
             return 
  
  
