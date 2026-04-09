@@ -14,6 +14,8 @@ requires_certificate is either True or False
 shelf_life_days is either some number or None (meaning no shelf life)
 hazmat is irrelevant for the current script so all false
 """
+MONTH_IN_MINUTES = 43800
+
 parts = {
   "A-C-SL": app.Part(
     part_no = "A-C-SL",
@@ -116,7 +118,7 @@ for part in parts.values():
     part_no = part.part_no,
     unit_price = random.randint(100, 100000)/100,
     currency = "EUR",
-    lead_time_minutes = random.randint(5,43800), # Dit was Lead Time Days en randomint 0,3
+    lead_time_minutes = random.randint(5,MONTH_IN_MINUTES), # Dit was Lead Time Days en randomint 0,3
     certified = True
   )
   supplier_offer_usd = app.SupplierOffer(
@@ -124,7 +126,7 @@ for part in parts.values():
     part_no = part.part_no,
     unit_price = random.randint(100, 100000)/100,
     currency = "USD",
-    lead_time_minutes = random.randint(60,43800), # (is nu minimaal een uur) Dit was Lead Time Days en randomint 0,3
+    lead_time_minutes = random.randint(60,MONTH_IN_MINUTES), # (is nu minimaal een uur) Dit was Lead Time Days en randomint 0,3
     certified = True
   )
   offers.append(supplier_offer_eur)

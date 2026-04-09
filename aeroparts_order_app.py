@@ -90,7 +90,7 @@ PRIORITY_SCORE = {
  
 APPROVAL_LIMIT_EUR = 25_000 
 
-Supplier_eta = datetime
+
  
  
 # --- Core logic -------------------------------------------------------------- 
@@ -180,10 +180,6 @@ def select_supplier(req: OrderRequest, offers: List[SupplierOffer], parts: Dict[
  
 def estimate_eta_from_supplier(offer: SupplierOffer, req: OrderRequest) -> datetime: 
     # BUG: lead_time_days treated as hours. (veranderd naar lead_time_minutes)
-    Supplier_eta = datetime.now(UTC) + timedelta(days=offer.lead_time_minutes)
-    if req.priority == "AOG":
-        Supplier_eta = datetime.now(UTC) + timedelta(minutes=offer.lead_time_minutes)
-
     
     return  datetime.now(UTC) + timedelta(minutes=offer.lead_time_minutes)
  
@@ -278,19 +274,19 @@ def place_order(req: OrderRequest, parts: Dict[str, Part], stock: List[StockItem
         return OrderResult(
             order_id="Invalid Order, ETA exceeds priority", 
             source_type="SUPPLIER", 
-            source=None, 
-            quantity=None, 
-            eta=eta, 
-            total_cost_eur=None, 
+            source="N/A", 
+            quantity=0, 
+            eta=datetime.now(UTC), 
+            total_cost_eur=0, 
             notes=notes 
         )
-    else:
-        return OrderResult( 
-            order_id=generate_order_id(req), 
-            source_type="SUPPLIER", 
-            source=offer.supplier, 
-            quantity=req.quantity, 
-            eta=eta, 
-            total_cost_eur=total, 
-            notes=notes 
-        ) 
+    
+    return OrderResult( 
+        order_id=generate_order_id(req), 
+        source_type="SUPPLIER", 
+        source=offer.supplier, 
+        quantity=req.quantity, 
+        eta=eta, 
+        total_cost_eur=total, 
+        notes=notes 
+    ) 
