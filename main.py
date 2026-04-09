@@ -153,9 +153,12 @@ def get_user_input():
   if priority == "AOG": #Als AOG is ingevuld dan gaat het per minuten niet dagen of uren want t moet onder 1 uur zitten.
     print("AOG Priority given, ETA must be < 1 hour")
     needed_by = datetime.now(UTC) + timedelta(minutes=60)
-  else: # Routine + Urgent
+  elif priority == "URGENT": # Routine + Urgent
+    needed_by = datetime.now(UTC) + timedelta(days= 5)
+  else:
     needed_by = datetime.now(UTC) + timedelta(days= float(input(f"In how many days is the item needed? \n")))
-    print(needed_by) #om te kijken of de gegeven tijd onder of boven ETA zit, kan weg if obsolete
+  
+  print(needed_by) #om te kijken of de gegeven tijd onder of boven ETA zit, kan weg if obsolete
   request = app.OrderRequest(
     request_id=1,
     part_no=part_no,

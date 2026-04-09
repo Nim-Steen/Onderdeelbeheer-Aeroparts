@@ -280,7 +280,7 @@ def place_order(req: OrderRequest, parts: Dict[str, Part], stock: List[StockItem
             source_type="SUPPLIER", 
             source=None, 
             quantity=None, 
-            eta=None, 
+            eta=eta, 
             total_cost_eur=None, 
             notes=notes 
         )
