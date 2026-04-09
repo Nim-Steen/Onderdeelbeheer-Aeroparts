@@ -70,6 +70,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+DAY_IN_MINUTES = 60*24
+
 
 @pytest.fixture
 def complete_parts():
@@ -214,6 +216,7 @@ def AOG_request(basic_order_request):
   Returns the basic_order_request above, but with priority changed to "AOG"
   """
   basic_order_request.priority = "AOG"
+  basic_order_request.needed_by = datetime.now(UTC) + timedelta(hours = 1)
   return basic_order_request
 
 @pytest.fixture
@@ -230,6 +233,7 @@ def urgent_request(basic_order_request):
   Returns the basic_order_request above, but with priority changed to "URGENT"
   """
   basic_order_request.priority = "URGENT"
+  basic_order_request.needed_by = datetime.now(UTC) + timedelta(days = 5)
   return basic_order_request
 
 @pytest.fixture
@@ -352,7 +356,7 @@ def complete_offers(complete_parts):
   - 2 items for each item in complete_parts
   - a EUR and a USD version for each item
   - unit price randomized between 1 and 1000
-  - lead_time of 0 for EUR supplier, and 6 for USD supplier
+  - lead_time of 0 for EUR supplier, and 6 days for USD supplier
   - all certified
   
   A lot here is randomized, make sure to change values or add a whole SupplierOffer if you need specific values
@@ -372,7 +376,7 @@ def complete_offers(complete_parts):
       part_no = part.part_no,
       unit_price = random.randint(100, 100000)/100,
       currency = "USD",
-      lead_time_minutes = 6,
+      lead_time_minutes = 6 * DAY_IN_MINUTES,
       certified = True
     )
     offers.append(supplier_offer_eur)
@@ -406,7 +410,7 @@ def complete_no_AOG_offers(complete_offers):
   Returns list of offers but with the lead_time_minutes increased so it can't match the AOG deadline
   """
   for supplier_offer in complete_offers:
-    supplier_offer.lead_time_minutes = 4
+    supplier_offer.lead_time_minutes = DAY_IN_MINUTES
   return complete_offers
 
 @pytest.fixture
@@ -415,7 +419,7 @@ def complete_no_urgent_offers(complete_offers):
   Returns list of offers but with the lead_time_minutes increased so it can't match the urgent deadline
   """
   for supplier_offer in complete_offers:
-    supplier_offer.lead_time_minutes = 10
+    supplier_offer.lead_time_minutes = 10 * DAY_IN_MINUTES
   return complete_offers
 
 @pytest.fixture
@@ -745,7 +749,7 @@ class TestsPlaceOrder:
   @pytest.mark.method_place_order
   def test_case_09(self, low_needed_by_request, complete_parts, no_AOG_AMS_stock, complete_no_AOG_offers):
     """
-    Test calls the place_order function with a request with 30 minute needed_by, a complete dictionary of parts, stock with ETA > 1hr and offers with lead_time of 4 days.
+    Test calls the place_order function with a request with 30 minute needed_by, a complete dictionary of parts, stock with ETA > 1hr and offers with lead_time of a day.
     It then checks all notes in the resulting OrderResult and sets in_time to False if a note contains "needed_by" 
 
     Test passes if in_time has been set to False
@@ -873,7 +877,7 @@ class TestsPlaceOrder:
     logger.info("Test criterium 13: Wanneer een item met AOG-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen een uur leverbaar is")
     result = app.place_order(AOG_request, complete_parts, no_AOG_AMS_stock, complete_no_AOG_offers)
 
-    assert not result
+    assert result.quantity == 0 and result.total_cost_eur == 0
 
 
   @pytest.mark.criterium_13
@@ -914,7 +918,7 @@ class TestsPlaceOrder:
     logger.info("Test criterium 14: Wanneer een item met urgent-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen vijf dagen leverbaar is")
     result = app.place_order(urgent_request, complete_parts, no_urgent_AMS_stock, complete_no_urgent_offers)
 
-    assert not result
+    assert result.quantity == 0 and result.total_cost_eur == 0
 
 
   @pytest.mark.criterium_14
