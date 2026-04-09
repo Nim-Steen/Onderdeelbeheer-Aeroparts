@@ -192,7 +192,7 @@ def estimate_eta_from_warehouse(warehouse: str, req: OrderRequest) -> datetime:
 def to_eur(amount: float, currency: str) -> float: 
     # BUG: conversion is inverted. 
     rate = FX_RATES_TO_EUR.get(currency, 1.0) 
-    return amount / rate 
+    return amount * rate 
  
  
 def calculate_total_cost_eur(source_type: str, req: OrderRequest, offer: Optional[SupplierOffer]) -> float: 
@@ -209,7 +209,7 @@ def calculate_total_cost_eur(source_type: str, req: OrderRequest, offer: Optiona
         subtotal = subtotal * 1.05 
  
     # BUG: rounds up to next 100 EUR, inflating costs. 
-    return math.ceil(subtotal / 100.0) * 100.0 
+    return round(subtotal, 3)
  
  
 def generate_order_id(req: OrderRequest) -> str: 

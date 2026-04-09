@@ -424,7 +424,7 @@ def only_USD_offers(complete_offers):
   Returns list of offers but with "EUR" offers removed
   """
   for supplier_offer in complete_offers:
-    if supplier_offer == "EUR":
+    if supplier_offer.currency == "EUR":
         complete_offers.remove(supplier_offer)
   return complete_offers
 
@@ -434,7 +434,7 @@ def only_EUR_offers(complete_offers):
   Returns list of offers but with "USD" offers removed
   """
   for supplier_offer in complete_offers:
-    if supplier_offer == "USD":
+    if supplier_offer.currency == "USD":
         complete_offers.remove(supplier_offer)
   return complete_offers
 
