@@ -868,12 +868,12 @@ class TestsPlaceOrder:
   def test_case_25(self, AOG_request, complete_parts, no_AOG_AMS_stock, complete_no_AOG_offers):
     """
     Test calls the place_order function with an AOG request, a complete dictionary of parts, and stock and offers that cannot meet the AOG-eta requirement.
-    Test passes if no order is placed.
+    Test passes if no order is placed (quantity and cost in result are 0).
     """
     logger.info("Test criterium 13: Wanneer een item met AOG-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen een uur leverbaar is")
     result = app.place_order(AOG_request, complete_parts, no_AOG_AMS_stock, complete_no_AOG_offers)
 
-    assert not result
+    assert result.quantity == 0 and result.total_cost_eur == 0
 
 
   @pytest.mark.criterium_13
@@ -909,12 +909,12 @@ class TestsPlaceOrder:
   def test_case_28(self, urgent_request, complete_parts, no_urgent_AMS_stock, complete_no_urgent_offers):
     """
     Test calls the place_order function with an urgent request, a complete dictionary of parts, and stock and offers that cannot meet the urgent-eta requirement.
-    Test passes if no order is placed.
+    Test passes if no order is placed (quantity and cost in result are 0).
     """
     logger.info("Test criterium 14: Wanneer een item met urgent-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen vijf dagen leverbaar is")
     result = app.place_order(urgent_request, complete_parts, no_urgent_AMS_stock, complete_no_urgent_offers)
 
-    assert not result
+    assert result.quantity == 0 and result.total_cost_eur == 0
 
 
   @pytest.mark.criterium_14
@@ -948,12 +948,12 @@ class TestsPlaceOrder:
   def test_case_31(self, basic_order_request, complete_parts, no_urgent_AMS_stock, complete_no_urgent_offers):
     """
     Test calls the place_order function with a routine request, a complete dictionary of parts, and stock and offers that cannot meet the urgent-eta requirement.
-    Test passes if an order is placed.
+    Test passes if an order is placed (resulting quantity is not 0)
     """
     logger.info("Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is")
     result = app.place_order(basic_order_request, complete_parts, no_urgent_AMS_stock, complete_no_urgent_offers)
 
-    assert result
+    assert result.quantity != 0
 
 
   @pytest.mark.criterium_15
@@ -961,12 +961,12 @@ class TestsPlaceOrder:
   def test_case_32(self, basic_order_request, complete_parts, complete_AMS_stock, complete_no_urgent_offers):
     """
     Test calls the place_order function with an routine request, a complete dictionary of parts, stock that can meet the urgent-eta requirement and offers that cannot.
-    Test passes if an order is placed.
+    Test passes if an order is placed (resulting quantity is not 0)
     """
     logger.info("Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is")
     result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, complete_no_urgent_offers)
 
-    assert result
+    assert result.quantity != 0
 
 
   @pytest.mark.criterium_15
@@ -974,12 +974,12 @@ class TestsPlaceOrder:
   def test_case_33(self, basic_order_request, complete_parts, no_urgent_AMS_stock, complete_offers):
     """
     Test calls the place_order function with an routine request, a complete dictionary of parts, offers that can meet the urgent-eta requirement and stock that cannot.
-    Test passes if an order is placed.
+    Test passes if an order is placed (resulting quantity is not 0)
     """
     logger.info("Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is")
     result = app.place_order(basic_order_request, complete_parts, no_urgent_AMS_stock, complete_offers)
 
-    assert result
+    assert result.quantity != 0
 
 
   @pytest.mark.criterium_16
@@ -1012,12 +1012,12 @@ class TestsPlaceOrder:
   def test_case_39(self, basic_order_request, complete_parts, complete_AMS_stock, complete_offers):
     """
     Test calls the place_order function with a request with a positive, whole quantity, a complete dictionary of parts, and a complete stock and offers.
-    Test passes if an order is returned.
+    Test passes if an order is returned (resulting quantity is not 0)
     """
     logger.info("Test criterium 18: Wanneer een geheel, niet-negatief aantal parts wordt besteld, runt het script wel")
     result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, complete_offers)
 
-    assert result
+    assert result.quantity != 0
 
 
   @pytest.mark.criterium_19
@@ -1037,12 +1037,12 @@ class TestsPlaceOrder:
   def test_case_43(self, basic_order_request, complete_parts, complete_AMS_stock, complete_offers):
     """
     Test calls the place_order function with a request with a compatible part, a complete dictionary of parts, and a complete stock and offers.
-    Test passes if an order is returned.
+    Test passes if an order is returned (resulting quantity is not 0)
     """
     logger.info("Test criterium 20: Wanneer het gevraagde part van een order overeenkomt met het gevraagde vliegtuigtype, runt het script")
     result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, complete_offers)
 
-    assert result
+    assert result.quantity != 0
 
 
   @pytest.mark.criterium_21
@@ -1189,12 +1189,12 @@ class TestsPlaceOrder:
   def test_case_64(self, low_needed_by_request, complete_far_stock, complete_no_urgent_offers, complete_parts):
     """
     Test calls the place_order function with an request with low needed_by, offers with high lead_time and stock at a far warehouse.
-    Test passes if the function gives no result
+    Test passes if the function gives no result (quantity and cost in result are 0)
     """
     logger.info("Test criterium 28: Wanneer er geen part binnen de needed_by binnen kan komen, wordt het niet besteld")
     result = app.place_order(low_needed_by_request, complete_parts, complete_far_stock, complete_no_urgent_offers)
 
-    assert not result
+    assert result.quantity == 0 and result.total_cost_eur == 0
 
 
   @pytest.mark.criterium_29
@@ -1238,12 +1238,12 @@ class TestsPlaceOrder:
   def test_case_71(self, basic_order_request, complete_parts, complete_expensive_offers):
     """
     The test then calls place_order with a default order request, empty stock and too expensive offers
-    Test passes if no order is placed
+    Test passes if no order is placed (quantity and cost in result are 0)
     """
     logger.info("Test criterium 33: Wanneer de kosten van een order boven de approval_limit liggen, wordt het niet besteld")
     result = app.place_order(basic_order_request, complete_parts, [], complete_expensive_offers)
 
-    assert not result
+    assert result.quantity == 0 and result.total_cost_eur == 0
 
 
   @pytest.mark.criterium_34
@@ -1251,12 +1251,12 @@ class TestsPlaceOrder:
   def test_case_72(self, basic_order_request, complete_parts, complete_offers):
     """
     The test then calls place_order with a default order request, empty stock and default offers
-    Test passes if an order is placed
+    Test passes if an order is placed (resulting quantity is not 0)
     """
     logger.info("Test criterium 34: Wanneer de kosten van een order onder de approval_limit liggen, wordt het wel besteld")
     result = app.place_order(basic_order_request, complete_parts, [], complete_offers)
 
-    assert result
+    assert result.quantity != 0
 
 
 
