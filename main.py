@@ -116,7 +116,7 @@ for part in parts.values():
     part_no = part.part_no,
     unit_price = random.randint(100, 100000)/100,
     currency = "EUR",
-    lead_time_days = random.randint(0,3),
+    lead_time_minutes = random.randint(5,43800), # Dit was Lead Time Days en randomint 0,3
     certified = True
   )
   supplier_offer_usd = app.SupplierOffer(
@@ -124,7 +124,7 @@ for part in parts.values():
     part_no = part.part_no,
     unit_price = random.randint(100, 100000)/100,
     currency = "USD",
-    lead_time_days = random.randint(0,3),
+    lead_time_minutes = random.randint(60,43800), # (is nu minimaal een uur) Dit was Lead Time Days en randomint 0,3
     certified = True
   )
   offers.append(supplier_offer_eur)
@@ -150,8 +150,12 @@ def get_user_input():
   priorities = [key for key in app.PRIORITY_SCORE.keys()]
   priority = input(f"What is the priority? You can choose from {priorities} \n").upper()
 
-  needed_by = datetime.now(UTC) + timedelta(hours = float(input(f"In how many hours is the item needed? \n")))
-
+  if priority == "AOG": #Als AOG is ingevuld dan gaat het per minuten niet dagen of uren want t moet onder 1 uur zitten.
+    print("AOG Priority given, ETA must be < 1 hour")
+    needed_by = datetime.now(UTC) + timedelta(minutes=60)
+  else: # Routine + Urgent
+    needed_by = datetime.now(UTC) + timedelta(days= float(input(f"In how many days is the item needed? \n")))
+    print(needed_by) #om te kijken of de gegeven tijd onder of boven ETA zit, kan weg if obsolete
   request = app.OrderRequest(
     request_id=1,
     part_no=part_no,
@@ -197,7 +201,6 @@ def print_order_info(response):
 
 order_request = get_user_input()
 
-response = app.place_order(req=order_request, parts=parts, stock=stock, offers=offers)
-
+response = app.place_order(req=order_request, parts=parts, stock=[], offers=offers)
 print_order_info(response)
 

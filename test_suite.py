@@ -333,7 +333,7 @@ def complete_offers(complete_parts):
       part_no = part.part_no,
       unit_price = random.randint(100, 100000)/100,
       currency = "EUR",
-      lead_time_days = 0,
+      lead_time_minutes = 0,
       certified = True
     )
     supplier_offer_usd = app.SupplierOffer(
@@ -341,7 +341,7 @@ def complete_offers(complete_parts):
       part_no = part.part_no,
       unit_price = random.randint(100, 100000)/100,
       currency = "USD",
-      lead_time_days = 6,
+      lead_time_minutes = 6,
       certified = True
     )
     offers.append(supplier_offer_eur)
@@ -372,19 +372,19 @@ def complete_cert_and_no_cert_offers(complete_offers):
 @pytest.fixture
 def complete_no_AOG_offers(complete_offers):
   """
-  Returns list of offers but with the lead_time_days increased so it can't match the AOG deadline
+  Returns list of offers but with the lead_time_minutes increased so it can't match the AOG deadline
   """
   for supplier_offer in complete_offers:
-    supplier_offer.lead_time_days = 4
+    supplier_offer.lead_time_minutes = 4
   return complete_offers
 
 @pytest.fixture
 def complete_no_urgent_offers(complete_offers):
   """
-  Returns list of offers but with the lead_time_days increased so it can't match the urgent deadline
+  Returns list of offers but with the lead_time_minutes increased so it can't match the urgent deadline
   """
   for supplier_offer in complete_offers:
-    supplier_offer.lead_time_days = 10
+    supplier_offer.lead_time_minutes = 10
   return complete_offers
 
 @pytest.fixture
@@ -1219,12 +1219,12 @@ class TestsSelectSupplier:
   def test_case_02(self, AOG_request, complete_offers, complete_parts):
     """
     Test calls the select_supplier method with and AOG-request, complete offers and complete parts.
-    Test passes if the lead_time_days of the resulting offer is 0
+    Test passes if the lead_time_minutes of the resulting offer is 0
     """
     print("Test criterium 1: Als bij een AOG-order de bestelling onder de ETA zit, wordt deze besteld")
     result = app.select_supplier(AOG_request, complete_offers, complete_parts)
 
-    assert result.lead_time_days == 0
+    assert result.lead_time_minutes == 0
     
 
   @pytest.mark.criterium_2
