@@ -57,7 +57,8 @@ Qua organisatie is nu mijn idee om een class te maken per functie die getest moe
 Dan kan in de class de relevante variabelen al gedefiniëerd worden, en eventueel in de test zelf nog worden aangepast. 
 Maar dit is pas een eerste opzet en misschien niet de beste manier om dit aan te pakken. 
 
-Voor verdere context in de log kun je print statements in je tests toevoegen, alles wat geprint wordt, zal in de log worden geschreven. 
+Voor verdere context in de log kun je logger.info statements in je tests toevoegen, alles in die statements, zal in de log worden geschreven. 
+Print statements zul je wel in de terminal zien voor debugging van je test, maar komen niet in de log terecht.
 """
 
 import aeroparts_order_app as app
@@ -65,6 +66,9 @@ from datetime import datetime, timedelta, UTC
 import pytest
 import random
 import copy
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
@@ -244,6 +248,14 @@ def fractional_request(basic_order_request):
   basic_order_request.quantity = 0.5
   return basic_order_request
 
+@pytest.fixture
+def big_request(basic_order_request):
+  """
+  Returns the basic_order_request above, but with the quantity between 10 and 50
+  """
+  basic_order_request.quantity = random.randint(10,50)
+  return basic_order_request
+
 
 
 @pytest.fixture
@@ -279,6 +291,25 @@ def complete_AMS_and_far_stock(complete_AMS_stock):
     far_stock.warehouse = "far"
     complete_stock.append(far_stock)
   return complete_stock
+
+
+@pytest.fixture
+def complete_more_far_than_AMS_stock(complete_AMS_and_far_stock):
+  for stock in complete_AMS_and_far_stock:
+    if stock.warehouse == "AMS":
+      stock.on_hand = 10
+    else:
+      stock.on_hand = 100
+  return complete_AMS_and_far_stock
+    
+
+
+@pytest.fixture
+def complete_far_stock(complete_AMS_stock):
+  "returns stock from a 'far' warehouse"
+  for stock in complete_AMS_stock:
+    stock.warehouse = "far"
+  return complete_AMS_stock
 
 @pytest.fixture
 def complete_expired_AMS_stock(complete_AMS_stock):
@@ -393,7 +424,7 @@ def only_USD_offers(complete_offers):
   Returns list of offers but with "EUR" offers removed
   """
   for supplier_offer in complete_offers:
-    if supplier_offer == "EUR":
+    if supplier_offer.currency == "EUR":
         complete_offers.remove(supplier_offer)
   return complete_offers
 
@@ -403,8 +434,17 @@ def only_EUR_offers(complete_offers):
   Returns list of offers but with "USD" offers removed
   """
   for supplier_offer in complete_offers:
-    if supplier_offer == "USD":
+    if supplier_offer.currency == "USD":
         complete_offers.remove(supplier_offer)
+  return complete_offers
+
+@pytest.fixture
+def complete_expensive_offers(complete_offers):
+  """
+  Returns list of offers but with all unit_prices above the approval limit
+  """
+  for supplier_offer in complete_offers:
+    supplier_offer.unit_price = app.APPROVAL_LIMIT_EUR + 1
   return complete_offers
 
 
@@ -421,7 +461,7 @@ class TestsDeductStock:
 
     Test passes if the new stock is equal to the original stock minus the requested quantity
     """
-    print("Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.")
+    logger.info("Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.")
 
     part_no = basic_order_request.part_no
     quantity = basic_order_request.quantity
@@ -450,7 +490,7 @@ class TestsDeductStock:
 
     Test passes if the new stock is equal to the original AMS stock minus the requested quantity, and the original far stock hasn't changed
     """
-    print("Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.")
+    logger.info("Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.")
 
     part_no = basic_order_request.part_no
     quantity = basic_order_request.quantity
@@ -488,7 +528,7 @@ class TestsDeductStock:
 
     Test passes if the new stock is equal to the original AMS stock minus the requested quantity, and the original other stock hasn't changed
     """
-    print("Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.")
+    logger.info("Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.")
 
     part_no = basic_order_request.part_no
     quantity = basic_order_request.quantity
@@ -536,7 +576,7 @@ class TestsCalculateTotalCostsEur:
 
     Test passes if the intended_cost is equal to the result of the function, both rounded to 3 decimals to avoid rounding errors
     """
-    print("Test criterium 21: Wanneer een part in USD wordt besteld, wordt de prijs correct naar EUR converteerd")
+    logger.info("Test criterium 21: Wanneer een part in USD wordt besteld, wordt de prijs correct naar EUR converteerd")
     for item in only_USD_offers:
       if item.part_no == basic_order_request.part_no:
         price_per_item = item.unit_price
@@ -550,10 +590,10 @@ class TestsCalculateTotalCostsEur:
     assert round(intended_cost, 3) == round(result, 3)
     
     
-
   @pytest.mark.criterium_22
+  @pytest.mark.criterium_32
   @pytest.mark.method_calculate_total_cost_eur
-  def test_case_48(self, basic_order_request, only_EUR_offers):
+  def test_case_48_and_69(self, basic_order_request, only_EUR_offers):
     """
     Test notes the cost of the item from the supplier and stores it as price_per_item, and stores the offer
     Then it calculates the intended cost by multiplying the price_per_item by the requested quantity
@@ -561,7 +601,8 @@ class TestsCalculateTotalCostsEur:
 
     Test passes if the intended_cost is equal to the result of the function, both rounded to 3 decimals to avoid rounding errors
     """
-    print("Test criterium 22: Wanneer een part in EUR wordt besteld, wordt de prijs niet geconverteerd")
+    logger.info("Test criterium 22: Wanneer een part in EUR wordt besteld, wordt de prijs niet geconverteerd")
+    logger.info("Test criterium 32: Wanneer minder dan 10 items worden besteld bij een supplier, wordt de kost per part gelijk aan de unit price")
     for item in only_EUR_offers:
       if item.part_no == basic_order_request.part_no:
         price_per_item = item.unit_price
@@ -584,7 +625,7 @@ class TestsCalculateTotalCostsEur:
 
     Test passes if the intended_cost is equal to the result of the function, both rounded to 3 decimals.
     """
-    print("Test criterium 24: De kosten van een part uit de warehouse wordt met 3 decimalen na de komma (of zoveel als relevant) weergegeven")
+    logger.info("Test criterium 24: De kosten van een part uit de warehouse wordt met 3 decimalen na de komma (of zoveel als relevant) weergegeven")
     intended_cost = basic_order_request.quantity * 15.0
 
     result = app.calculate_total_cost_eur("WAREHOUSE", basic_order_request, None)
@@ -604,7 +645,7 @@ class TestsCalculateTotalCostsEur:
     Test passes if the result is the intended costs equal the results from the function
     NOTE: This doesn't only test the rounding, it is also dependent on test cases 46 and 49
     """
-    print("Test criterium 25: De kosten van een part van een supplier wordt met 3 decimalen na de komma weergegeven")
+    logger.info("Test criterium 25: De kosten van een part van een supplier wordt met 3 decimalen na de komma weergegeven")
     price_per_item = []
     offers = []
     for item in complete_offers:
@@ -623,6 +664,30 @@ class TestsCalculateTotalCostsEur:
     assert result == intended_cost
 
 
+  @pytest.mark.criterium_31
+  @pytest.mark.method_calculate_total_cost_eur
+  def test_case_67(self, big_request, only_EUR_offers):
+    """
+    Test notes the cost of the item from the supplier and stores it as price_per_item, and stores the offer
+    Then it calculates the intended cost by multiplying the price_per_item by the requested quantity
+    Then it runs the calculate_total_cost_eur function.
+
+    Test passes if the without_discount is higher than the result of the function, both rounded to 3 decimals to avoid rounding errors
+    """
+    logger.info("Test criterium 31: Wanneer meer dan 10 items worden besteld bij een supplier, wordt de kost per part lager dan de unit price")
+    for item in only_EUR_offers:
+      if item.part_no == big_request.part_no:
+        price_per_item = item.unit_price
+        offer = item
+        break
+
+    without_discount = price_per_item * big_request.quantity
+
+    result = app.calculate_total_cost_eur("SUPPLIER", big_request, offer)
+
+    assert round(result,3) < round(without_discount, 3)
+
+
 
 # A class to test the method generate_order_id
 class TestsGenerateOrderId:
@@ -636,7 +701,7 @@ class TestsGenerateOrderId:
 
     The test passes if duplicate_id is not set to True. 
     """
-    print("Test criterium 23: Als veel items in dezelfde seconde worden besteld, hebben ze ieder een uniek ordernummer")
+    logger.info("Test criterium 23: Als veel items in dezelfde seconde worden besteld, hebben ze ieder een uniek ordernummer")
     order_ids = []
     duplicate_id = False
     for _ in range(20):
@@ -663,7 +728,7 @@ class TestsPlaceOrder:
 
     Test passes if certified has been set to False
     """
-    print("Test criterium 3: Als bij een order met certificering geen onderdeel met certificering beschikbaar is, krijgt de gebruiker hier melding van")
+    logger.info("Test criterium 3: Als bij een order met certificering geen onderdeel met certificering beschikbaar is, krijgt de gebruiker hier melding van")
     result = app.place_order(cert_request, complete_parts, [], complete_no_cert_offers)
 
     certified = True
@@ -685,7 +750,7 @@ class TestsPlaceOrder:
 
     Test passes if in_time has been set to False
     """
-    print("Test criterium 4: Als bij een order met ETA geen onderdeel binnen de ETA beschikbaar is, krijgt de gebruiker hier melding van")
+    logger.info("Test criterium 4: Als bij een order met ETA geen onderdeel binnen de ETA beschikbaar is, krijgt de gebruiker hier melding van")
 
     result = app.place_order(low_needed_by_request, complete_parts, no_AOG_AMS_stock, complete_no_AOG_offers)
 
@@ -707,7 +772,7 @@ class TestsPlaceOrder:
 
     Test passes if expired has been set to True
     """
-    print("Test criterium 5: Als bij een order met vervaldatum geen onderdeel binnen de vervaldatum beschikbaar is, krijgt de gebruiker hier melding van")
+    logger.info("Test criterium 5: Als bij een order met vervaldatum geen onderdeel binnen de vervaldatum beschikbaar is, krijgt de gebruiker hier melding van")
     result = app.place_order(low_needed_by_request, complete_parts, complete_expired_AMS_stock, [])
 
     expired = False
@@ -729,7 +794,7 @@ class TestsPlaceOrder:
 
     Test passes if compatible has been set to False
     """
-    print("test criterium 6: Als bij een order voor een vliegtuig geen onderdeel voor dat vliegtuig beschikbaar is, krijgt de gebruiker hier melding van")
+    logger.info("test criterium 6: Als bij een order voor een vliegtuig geen onderdeel voor dat vliegtuig beschikbaar is, krijgt de gebruiker hier melding van")
     result = app.place_order(incompatible_request, complete_parts, complete_AMS_stock, complete_offers)
 
     compatible = True
@@ -751,7 +816,7 @@ class TestsPlaceOrder:
 
     Test passes if there are no notes.
     """
-    print("Test criterium 7: Als een order zonder problemen kan worden uitgevoerd, krijgt de gebruiker geen errormelding")
+    logger.info("Test criterium 7: Als een order zonder problemen kan worden uitgevoerd, krijgt de gebruiker geen errormelding")
     result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, complete_offers)
 
     assert not result.notes
@@ -767,7 +832,7 @@ class TestsPlaceOrder:
 
     Test passes if the result is an array and more than one option is returned.
     """
-    print("Test criterium 11: Als een order niet door een warehouse kan worden vervuld, worden de verschillende goedgekeurde leveranciers met hun prijzen getoond.")
+    logger.info("Test criterium 11: Als een order niet door een warehouse kan worden vervuld, worden de verschillende goedgekeurde leveranciers met hun prijzen getoond.")
     result = app.place_order(basic_order_request, complete_parts, [], complete_offers)
 
     assert len(result) > 1
@@ -782,7 +847,7 @@ class TestsPlaceOrder:
 
     Test passes if the new_amount is equal to the original_amount minus the requested amount.
     """
-    print("Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.")
+    logger.info("Test criterium 12: Als een part uit een warehouse wordt gehaald, dan wordt de stock van dit item met de gevraagde hoeveelheid verlaagd bij dit warehouse.")
     for item in complete_AMS_stock:
       if item.part_no == basic_order_request.part_no:
         original_amount = item.on_hand
@@ -805,7 +870,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with an AOG request, a complete dictionary of parts, and stock and offers that cannot meet the AOG-eta requirement.
     Test passes if no order is placed.
     """
-    print("Test criterium 13: Wanneer een item met AOG-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen een uur leverbaar is")
+    logger.info("Test criterium 13: Wanneer een item met AOG-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen een uur leverbaar is")
     result = app.place_order(AOG_request, complete_parts, no_AOG_AMS_stock, complete_no_AOG_offers)
 
     assert not result
@@ -818,7 +883,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with an AOG request, a complete dictionary of parts, stock that can meet the AOG-eta requirement and offers that cannot.
     Test passes if the order placed has an eta within 1 hour.
     """
-    print("Test criterium 13: Wanneer een item met AOG-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen een uur leverbaar is")
+    logger.info("Test criterium 13: Wanneer een item met AOG-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen een uur leverbaar is")
     result = app.place_order(AOG_request, complete_parts, complete_AMS_stock, complete_no_AOG_offers)
 
     assert result.eta < datetime.now(UTC) + timedelta(hours=1)
@@ -833,7 +898,7 @@ class TestsPlaceOrder:
 
     Test currently passes/fails depending on the price of offers.
     """
-    print("Test criterium 13: Wanneer een item met AOG-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen een uur leverbaar is")
+    logger.info("Test criterium 13: Wanneer een item met AOG-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen een uur leverbaar is")
     result = app.place_order(AOG_request, complete_parts, no_AOG_AMS_stock, complete_offers)
 
     assert result.eta < datetime.now(UTC) + timedelta(hours=1)
@@ -846,7 +911,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with an urgent request, a complete dictionary of parts, and stock and offers that cannot meet the urgent-eta requirement.
     Test passes if no order is placed.
     """
-    print("Test criterium 14: Wanneer een item met urgent-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen vijf dagen leverbaar is")
+    logger.info("Test criterium 14: Wanneer een item met urgent-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen vijf dagen leverbaar is")
     result = app.place_order(urgent_request, complete_parts, no_urgent_AMS_stock, complete_no_urgent_offers)
 
     assert not result
@@ -859,7 +924,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with an urgent request, a complete dictionary of parts, stock that can meet the urgent-eta requirement and offers that cannot.
     Test passes if the order placed has an eta within 5 days.
     """
-    print("Test criterium 14: Wanneer een item met urgent-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen vijf dagen leverbaar is")
+    logger.info("Test criterium 14: Wanneer een item met urgent-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen vijf dagen leverbaar is")
     result = app.place_order(urgent_request, complete_parts, complete_AMS_stock, complete_no_urgent_offers)
 
     assert result.eta < datetime.now(UTC) + timedelta(days=5)
@@ -872,7 +937,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with an urgent request, a complete dictionary of parts, offers that can meet the urgent-eta requirement and stock that cannot.
     Test passes if the order placed has an eta within 5 days.
     """
-    print("Test criterium 14: Wanneer een item met urgent-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen vijf dagen leverbaar is")
+    logger.info("Test criterium 14: Wanneer een item met urgent-prioriteit wordt besteld, dan wordt alleen besteld wanneer het onderdeel binnen vijf dagen leverbaar is")
     result = app.place_order(urgent_request, complete_parts, no_urgent_AMS_stock, complete_offers)
 
     assert result.eta < datetime.now(UTC) + timedelta(days=5)
@@ -885,7 +950,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with a routine request, a complete dictionary of parts, and stock and offers that cannot meet the urgent-eta requirement.
     Test passes if an order is placed.
     """
-    print("Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is")
+    logger.info("Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is")
     result = app.place_order(basic_order_request, complete_parts, no_urgent_AMS_stock, complete_no_urgent_offers)
 
     assert result
@@ -898,7 +963,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with an routine request, a complete dictionary of parts, stock that can meet the urgent-eta requirement and offers that cannot.
     Test passes if an order is placed.
     """
-    print("Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is")
+    logger.info("Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is")
     result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, complete_no_urgent_offers)
 
     assert result
@@ -911,7 +976,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with an routine request, a complete dictionary of parts, offers that can meet the urgent-eta requirement and stock that cannot.
     Test passes if an order is placed.
     """
-    print("Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is")
+    logger.info("Test criterium 15: Wanneer een item met routine-prioriteit wordt besteld, dan kan een part worden besteld dat niet binnen 5 dagen leverbaar is")
     result = app.place_order(basic_order_request, complete_parts, no_urgent_AMS_stock, complete_offers)
 
     assert result
@@ -924,7 +989,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with a request with a negative quantity, a complete dictionary of parts, and a complete stock and offers.
     Test passes if any Exception is raised.
     """
-    print("Test criterium 16: Wanneer een negatief aantal parts wordt besteld, runt het script niet")
+    logger.info("Test criterium 16: Wanneer een negatief aantal parts wordt besteld, runt het script niet")
     with pytest.raises(Exception):
       app.place_order(negative_request, complete_parts, complete_AMS_stock, complete_offers)
 
@@ -936,7 +1001,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with a request with a fractional quantity, a complete dictionary of parts, and a complete stock and offers.
     Test passes if any Exception is raised.
     """
-    print("Test criterium 17: Wanneer een niet-geheel aantal parts wordt besteld, runt het script niet")
+    logger.info("Test criterium 17: Wanneer een niet-geheel aantal parts wordt besteld, runt het script niet")
     with pytest.raises(Exception):
       app.place_order(fractional_request, complete_parts, complete_AMS_stock, complete_offers)
 
@@ -949,7 +1014,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with a request with a positive, whole quantity, a complete dictionary of parts, and a complete stock and offers.
     Test passes if an order is returned.
     """
-    print("Test criterium 18: Wanneer een geheel, niet-negatief aantal parts wordt besteld, runt het script wel")
+    logger.info("Test criterium 18: Wanneer een geheel, niet-negatief aantal parts wordt besteld, runt het script wel")
     result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, complete_offers)
 
     assert result
@@ -962,7 +1027,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with a request with an incompatible part, a complete dictionary of parts, and a complete stock and offers.
     Test passes if any Exception is raised.
     """
-    print("Test criterium 19: Wanneer het gevraagde part van een order niet overeenkomt met het gevraagde vliegtuigtype, runt het script niet")
+    logger.info("Test criterium 19: Wanneer het gevraagde part van een order niet overeenkomt met het gevraagde vliegtuigtype, runt het script niet")
     with pytest.raises(Exception):
       app.place_order(incompatible_request, complete_parts, complete_AMS_stock, complete_offers)
 
@@ -974,7 +1039,7 @@ class TestsPlaceOrder:
     Test calls the place_order function with a request with a compatible part, a complete dictionary of parts, and a complete stock and offers.
     Test passes if an order is returned.
     """
-    print("Test criterium 20: Wanneer het gevraagde part van een order overeenkomt met het gevraagde vliegtuigtype, runt het script")
+    logger.info("Test criterium 20: Wanneer het gevraagde part van een order overeenkomt met het gevraagde vliegtuigtype, runt het script")
     result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, complete_offers)
 
     assert result
@@ -990,7 +1055,7 @@ class TestsPlaceOrder:
 
     Test passes if the intended_cost is equal to the total_cost_eur in the result from place_order, both rounded to 3 decimals to avoid rounding errors
     """
-    print("Test criterium 21: Wanneer een part in USD wordt besteld, wordt de prijs correct naar EUR converteerd")
+    logger.info("Test criterium 21: Wanneer een part in USD wordt besteld, wordt de prijs correct naar EUR converteerd")
     for item in only_USD_offers:
       if item.part_no == basic_order_request.part_no:
         price_per_item = item.unit_price
@@ -1005,8 +1070,9 @@ class TestsPlaceOrder:
 
 
   @pytest.mark.criterium_22
+  @pytest.mark.criterium_32
   @pytest.mark.method_place_order
-  def test_case_49(self, basic_order_request, complete_parts, only_EUR_offers):
+  def test_case_49_and_70(self, basic_order_request, complete_parts, only_EUR_offers):
     """
     Test notes the cost of the item from the supplier and stores it as price_per_item
     Then it calculates the intended cost by multiplying the price_per_item by the requested quantity
@@ -1014,7 +1080,8 @@ class TestsPlaceOrder:
 
     Test passes if the intended_cost is equal to the total_cost_eur in the result from place_order, both rounded to 3 decimals to avoid rounding errors
     """
-    print("Test criterium 22: Wanneer een part in EUR wordt besteld, wordt de prijs niet geconverteerd")
+    logger.info("Test criterium 22: Wanneer een part in EUR wordt besteld, wordt de prijs niet geconverteerd")
+    logger.info("Test criterium 32: Wanneer minder dan 10 items worden besteld bij een supplier, wordt de kost per part gelijk aan de unit price")
     for item in only_EUR_offers:
       if item.part_no == basic_order_request.part_no:
         price_per_item = item.unit_price
@@ -1037,7 +1104,7 @@ class TestsPlaceOrder:
 
     The test passes if duplicate_id is not set to True. 
     """
-    print("Test criterium 23: Als veel items in dezelfde seconde worden besteld, hebben ze ieder een uniek ordernummer")
+    logger.info("Test criterium 23: Als veel items in dezelfde seconde worden besteld, hebben ze ieder een uniek ordernummer")
     order_ids = []
     duplicate_id = False
     for _ in range(20):
@@ -1060,7 +1127,7 @@ class TestsPlaceOrder:
 
     Test passes if the intended_cost is equal to the total_cost_eur in the result from place_order, both rounded to 3 decimals.
     """
-    print("Test criterium 24: De kosten van een part uit de warehouse wordt met 3 decimalen na de komma (of zoveel als relevant) weergegeven")
+    logger.info("Test criterium 24: De kosten van een part uit de warehouse wordt met 3 decimalen na de komma (of zoveel als relevant) weergegeven")
     intended_cost = basic_order_request.quantity * 15.0
 
     result = app.place_order(basic_order_request, complete_parts, complete_AMS_stock, [])
@@ -1079,7 +1146,7 @@ class TestsPlaceOrder:
     Test passes if the total_cost_eur in the result from place_order is any of the prices in intended_costs
     NOTE: This doesn't only test the rounding, it is also dependent on test cases 46 and 49
     """
-    print("Test criterium 25: De kosten van een part van een supplier wordt met 3 decimalen na de komma weergegeven")
+    logger.info("Test criterium 25: De kosten van een part van een supplier wordt met 3 decimalen na de komma weergegeven")
     price_per_item = []
     for item in complete_offers:
       if item.part_no == basic_order_request.part_no:
@@ -1095,6 +1162,103 @@ class TestsPlaceOrder:
     assert result.total_cost_eur in intended_cost
 
 
+  @pytest.mark.criterium_30
+  @pytest.mark.method_place_order
+  def test_case_57(self, basic_order_request, complete_offers, complete_parts):
+    """
+    Test filters the offers list to only the ones for the correct part.
+    It then saves the cheapest offer in a variable by iterating through the options and adjusting the cheapest offer if a cheaper one is found.
+    Then it runs place_order with an empty warehouse list, and compares the chosen supplier to the cheapest one.
+
+    Test passes if the cheapest one is chosen. 
+    """
+    logger.info("Test criterium 30: Wanneer bij meerdere suppliers kan worden besteld, wordt degene met de laagste prijs gekozen")
+    relevant_offers = [offer for offer in complete_offers if basic_order_request.part_no == offer.part_no]
+    cheapest_offer = relevant_offers[0]
+    for offer in relevant_offers:
+      if offer.unit_price < cheapest_offer.unit_price:
+        cheapest_offer = offer
+
+    result = app.place_order(basic_order_request, complete_parts, [], complete_offers)
+
+    assert result.source == cheapest_offer.supplier
+
+
+  @pytest.mark.criterium_28
+  @pytest.mark.method_place_order
+  def test_case_64(self, low_needed_by_request, complete_far_stock, complete_no_urgent_offers, complete_parts):
+    """
+    Test calls the place_order function with an request with low needed_by, offers with high lead_time and stock at a far warehouse.
+    Test passes if the function gives no result
+    """
+    logger.info("Test criterium 28: Wanneer er geen part binnen de needed_by binnen kan komen, wordt het niet besteld")
+    result = app.place_order(low_needed_by_request, complete_parts, complete_far_stock, complete_no_urgent_offers)
+
+    assert not result
+
+
+  @pytest.mark.criterium_29
+  @pytest.mark.method_place_order
+  def test_case_66(self, basic_order_request, complete_more_far_than_AMS_stock, complete_parts):
+    """
+    The test then calls place_order with a default order request, stock where the far warehouse has more stock than AMS, and empty offers
+    Test passes if result picks the closest (and thus fastest) warehouse
+    """
+    logger.info("Test criterium 29: Wanneer bij meerdere warehouses kan worden besteld, wordt degene met de snelste levering gekozen")
+    result = app.place_order(basic_order_request, complete_parts, complete_more_far_than_AMS_stock, [])
+
+    assert result.source == "AMS"
+
+
+  @pytest.mark.criterium_31
+  @pytest.mark.method_place_order
+  def test_case_68(self, big_request, complete_parts, only_EUR_offers):
+    """
+    Test notes the cost of the item from the supplier and stores it as price_per_item
+    Then it calculates the cost without discount by multiplying the price_per_item by the requested quantity
+    Then it runs the place_order function.
+
+    Test passes if the no_discount_cost is higher than the total_cost_eur in the result from place_order, both rounded to 3 decimals to avoid rounding errors
+    """
+    logger.info("Test criterium 31: Wanneer meer dan 10 items worden besteld bij een supplier, wordt de kost per part lager dan de unit price")
+    for item in only_EUR_offers:
+      if item.part_no == big_request.part_no:
+        price_per_item = item.unit_price
+        break
+
+    no_discount_cost = price_per_item * big_request.quantity
+
+    result = app.place_order(big_request, complete_parts, [], only_EUR_offers)
+
+    assert round(result.total_cost_eur,3) == round(no_discount_cost, 3)
+
+
+  @pytest.mark.criterium_33
+  @pytest.mark.method_place_order
+  def test_case_71(self, basic_order_request, complete_parts, complete_expensive_offers):
+    """
+    The test then calls place_order with a default order request, empty stock and too expensive offers
+    Test passes if no order is placed
+    """
+    logger.info("Test criterium 33: Wanneer de kosten van een order boven de approval_limit liggen, wordt het niet besteld")
+    result = app.place_order(basic_order_request, complete_parts, [], complete_expensive_offers)
+
+    assert not result
+
+
+  @pytest.mark.criterium_34
+  @pytest.mark.method_place_order
+  def test_case_72(self, basic_order_request, complete_parts, complete_offers):
+    """
+    The test then calls place_order with a default order request, empty stock and default offers
+    Test passes if an order is placed
+    """
+    logger.info("Test criterium 34: Wanneer de kosten van een order onder de approval_limit liggen, wordt het wel besteld")
+    result = app.place_order(basic_order_request, complete_parts, [], complete_offers)
+
+    assert result
+
+
 
 # A class to test the method validate_request
 class TestsValidateRequest:
@@ -1105,7 +1269,7 @@ class TestsValidateRequest:
     It then checks all issues raised by validate_request using an incompatible request and sets compatible to False if an issue contains "not compatible"
     Test passes if compatible has been set to False
     """
-    print("Test criterium 6: Als bij een order voor een vliegtuig geen onderdeel voor dat vliegtuig beschikbaar is, krijgt de gebruiker hier melding van")
+    logger.info("Test criterium 6: Als bij een order voor een vliegtuig geen onderdeel voor dat vliegtuig beschikbaar is, krijgt de gebruiker hier melding van")
     response = app.validate_request(incompatible_request, complete_parts)
 
     compatible = True
@@ -1123,10 +1287,8 @@ class TestsValidateRequest:
     """
     Test checks whether the validate_request function returns any issues when a negative amount is requested.
     Test passes if any issue has been raised.
-
-    NOTE: Test currently passes because an erronous issue is raised (see test_case_12), will no longer pass when this is fixed.
     """
-    print("Test criterium 16: Wanneer een negatief aantal parts wordt besteld, runt het script niet")
+    logger.info("Test criterium 16: Wanneer een negatief aantal parts wordt besteld, runt het script niet")
     response = app.validate_request(negative_request, complete_parts)
 
     assert response
@@ -1138,10 +1300,8 @@ class TestsValidateRequest:
     """
     Test checks whether the validate_request function returns any issues with a fractional request.
     Test passes if any issue has been raised.
-
-    NOTE: Test currently passes because an erronous issue is raised (see test_case_12), will no longer pass when this is fixed.
     """
-    print("Test criterium 17: Wanneer een niet-geheel aantal parts wordt besteld, runt het script niet")
+    logger.info("Test criterium 17: Wanneer een niet-geheel aantal parts wordt besteld, runt het script niet")
     response = app.validate_request(fractional_request, complete_parts)
 
     assert response
@@ -1153,10 +1313,8 @@ class TestsValidateRequest:
     """
     Test checks whether the validate_request function returns any issues with the default parts and order request.
     Test passes if no issue has been raised.
-
-    NOTE: Test currently fails because an erronous issue is raised (see test_case_12/test_case_40), will no longer fail when this is fixed.
     """
-    print("Test criterium 18: Wanneer een geheel, niet-negatief aantal parts wordt besteld, runt het script wel\n" \
+    logger.info("Test criterium 18: Wanneer een geheel, niet-negatief aantal parts wordt besteld, runt het script wel\n" \
     "Test criterium 20: Wanneer het gevraagde part van een order overeenkomt met het gevraagde vliegtuigtype, runt het script")
     response = app.validate_request(basic_order_request, complete_parts)
 
@@ -1170,7 +1328,7 @@ class TestsValidateRequest:
     Test checks whether the validate_request function returns any issues with an incompatible request.
     Test passes if any issue has been raised.
     """
-    print("Test criterium 19: Wanneer het gevraagde part van een order niet overeenkomt met het gevraagde vliegtuigtype, runt het script niet")
+    logger.info("Test criterium 19: Wanneer het gevraagde part van een order niet overeenkomt met het gevraagde vliegtuigtype, runt het script niet")
     response = app.validate_request(incompatible_request, complete_parts)
 
     assert response
@@ -1187,7 +1345,7 @@ class TestsToEur:
     Test then compares the result to the intended result (amount * 0.92), each rounded to 3 decimals to avoid rounding errors
     Test passes if the result is equal to the amount * 0.92
     """
-    print("Test criterium 21: Wanneer een part in USD wordt besteld, wordt de prijs correct naar EUR converteerd")
+    logger.info("Test criterium 21: Wanneer een part in USD wordt besteld, wordt de prijs correct naar EUR converteerd")
     amount = random.randint(1,100000)/100
     currency = "USD"
     converted_amount = app.to_eur(amount, currency)
@@ -1203,7 +1361,7 @@ class TestsToEur:
     Test then compares the result to the intended result (amount), each rounded to 3 decimals to avoid rounding errors
     Test passes if the result is equal to the original amount. 
     """
-    print("Test criterium 22: Wanneer een part in EUR wordt besteld, wordt de prijs niet geconverteerd")
+    logger.info("Test criterium 22: Wanneer een part in EUR wordt besteld, wordt de prijs niet geconverteerd")
     amount = random.randint(1,100000)/100
     currency = "EUR"
     converted_amount = app.to_eur(amount, currency)
@@ -1221,7 +1379,7 @@ class TestsSelectSupplier:
     Test calls the select_supplier method with and AOG-request, complete offers and complete parts.
     Test passes if the lead_time_minutes of the resulting offer is 0
     """
-    print("Test criterium 1: Als bij een AOG-order de bestelling onder de ETA zit, wordt deze besteld")
+    logger.info("Test criterium 1: Als bij een AOG-order de bestelling onder de ETA zit, wordt deze besteld")
     result = app.select_supplier(AOG_request, complete_offers, complete_parts)
 
     assert result.lead_time_minutes == 0
@@ -1234,7 +1392,7 @@ class TestsSelectSupplier:
     Test calls the select_supplier method with an AOG-request, offers that don't meet AOG and complete parts.
     Test passes if the function gives no result.
     """
-    print("Test criterium 2: Als bij een AOG-order de bestelling boven de ETA zit, wordt deze niet besteld")
+    logger.info("Test criterium 2: Als bij een AOG-order de bestelling boven de ETA zit, wordt deze niet besteld")
     result = app.select_supplier(AOG_request, complete_no_AOG_offers, complete_parts)
 
     assert not result
@@ -1247,7 +1405,7 @@ class TestsSelectSupplier:
     Test calls the select_supplier method with a request for a certified part, offers with certification and complete parts.
     Test passes if the function gives a certified result
     """
-    print("Test criterium 8: Als een order certificering nodig heeft en er is er een met certificering beschikbaar, dan wordt er een onderdeel met certificering besteld")
+    logger.info("Test criterium 8: Als een order certificering nodig heeft en er is er een met certificering beschikbaar, dan wordt er een onderdeel met certificering besteld")
     result = app.select_supplier(cert_request, complete_offers, complete_parts)
 
     assert result.certified
@@ -1260,7 +1418,7 @@ class TestsSelectSupplier:
     Test calls the select_supplier method with a request for a certified part, offers with certification and no certification but cheaper and complete parts.
     Test passes if the function gives a certified result
     """
-    print("Test criterium 8: Als een order certificering nodig heeft en er is er een met certificering beschikbaar, dan wordt er een onderdeel met certificering besteld")
+    logger.info("Test criterium 8: Als een order certificering nodig heeft en er is er een met certificering beschikbaar, dan wordt er een onderdeel met certificering besteld")
     result = app.select_supplier(cert_request, complete_cert_and_no_cert_offers, complete_parts)
 
     assert result.certified
@@ -1273,8 +1431,38 @@ class TestsSelectSupplier:
     Test calls the select_supplier method with a request for a certified part, offers with no certification and complete parts.
     Test passes if the function gives result
     """
-    print("Test criterium 9: Als een order certificering nodig heeft en er is er geen met certificering beschikbaar, dan wordt er niks besteld")
+    logger.info("Test criterium 9: Als een order certificering nodig heeft en er is er geen met certificering beschikbaar, dan wordt er niks besteld")
     result = app.select_supplier(cert_request, complete_no_cert_offers, complete_parts)
+
+    assert not result
+
+
+  @pytest.mark.criterium_30
+  @pytest.mark.method_select_supplier
+  def test_case_56(self, basic_order_request, complete_offers, complete_parts):
+    """
+    Test first determines the cheapest price the part in the request is offered for.
+    It then runs select_supplier, and tests the chosen price.
+
+    Test passes if the price in the return is equal to the cheapest unit price. 
+    """
+    logger.info("Test criterium 30: Wanneer bij meerdere suppliers kan worden besteld, wordt degene met de laagste prijs gekozen")
+    cheapest_unit_price = min(offer.unit_price for offer in complete_offers if offer.part_no == basic_order_request.part_no)
+
+    result = app.select_supplier(basic_order_request, complete_offers, complete_parts)
+
+    assert result.unit_price == cheapest_unit_price
+
+
+  @pytest.mark.criterium_28
+  @pytest.mark.method_select_supplier
+  def test_case_63(self, low_needed_by_request, complete_no_urgent_offers, complete_parts):
+    """
+    Test calls the select_supplier function with an request with low needed_by, and offers with high lead_time.
+    Test passes if the function gives no result
+    """
+    logger.info("Test criterium 28: Wanneer er geen part binnen de needed_by binnen kan komen, wordt het niet besteld")
+    result = app.select_supplier(low_needed_by_request, complete_no_urgent_offers, complete_parts)
 
     assert not result
     
@@ -1289,7 +1477,7 @@ class TestsSelectWarehouse:
     Test calls the select_warehouse function with an AOG request and the regular AMS stock.
     Test passes if the function gives a result. 
     """
-    print("Test criterium 1: Als bij een AOG-order de bestelling onder de ETA zit, wordt deze besteld")
+    logger.info("Test criterium 1: Als bij een AOG-order de bestelling onder de ETA zit, wordt deze besteld")
     result = app.select_warehouse(AOG_request, complete_AMS_stock)
 
     assert result
@@ -1302,7 +1490,7 @@ class TestsSelectWarehouse:
     Test calls the select_warehouse function with an AOG request with past needed_by, and the regular AMS stock.
     Test passes if the function gives no result. 
     """
-    print("Test criterium 2: Als bij een AOG-order de bestelling boven de ETA zit, wordt deze niet besteld")
+    logger.info("Test criterium 2: Als bij een AOG-order de bestelling boven de ETA zit, wordt deze niet besteld")
     result = app.select_warehouse(past_needed_by_request, complete_AMS_stock)
 
     assert not result
@@ -1315,7 +1503,7 @@ class TestsSelectWarehouse:
     Test calls the select_warehouse function with an request with a shelf life, and expired AMS stock.
     Test passes if the function gives no result
     """
-    print("Test criterium 10: Als een order een vervaldatum heeft, wordt er een onderdeel binnen de vervaldatum, of niks, besteld")
+    logger.info("Test criterium 10: Als een order een vervaldatum heeft, wordt er een onderdeel binnen de vervaldatum, of niks, besteld")
     result = app.select_warehouse(shelf_life_request, complete_expired_AMS_stock)
 
     assert not result
@@ -1328,7 +1516,7 @@ class TestsSelectWarehouse:
     Test calls the select_warehouse function with an request with a shelf life, and expired AMS stock, met 1 niet-expired part in de far stock.
     Test passes if the item from the far stock is chosen
     """
-    print("Test criterium 10: Als een order een vervaldatum heeft, wordt er een onderdeel binnen de vervaldatum, of niks, besteld")
+    logger.info("Test criterium 10: Als een order een vervaldatum heeft, wordt er een onderdeel binnen de vervaldatum, of niks, besteld")
     far_item = app.StockItem(
       part_no = shelf_life_request.part_no,
       warehouse = "far", 
@@ -1341,3 +1529,29 @@ class TestsSelectWarehouse:
     result = app.select_warehouse(shelf_life_request, complete_expired_AMS_stock)
 
     assert result == 'far'
+
+
+  @pytest.mark.criterium_28
+  @pytest.mark.method_select_warehouse
+  def test_case_62(self, low_needed_by_request, complete_far_stock):
+    """
+    Test calls the select_warehouse function with an request with low needed_by, and stock from a far warehouse.
+    Test passes if the function gives no result
+    """
+    logger.info("Test criterium 28: Wanneer er geen part binnen de needed_by binnen kan komen, wordt het niet besteld")
+    result = app.select_warehouse(low_needed_by_request, complete_far_stock)
+
+    assert not result
+
+
+  @pytest.mark.criterium_29
+  @pytest.mark.method_select_warehouse
+  def test_case_65(self, basic_order_request, complete_more_far_than_AMS_stock):
+    """
+    The test then calls select_warehouse with a default order request and stock where the far warehouse has more stock than AMS
+    Test passes if result picks the closest (and thus fastest) warehouse
+    """
+    logger.info("Test criterium 29: Wanneer bij meerdere warehouses kan worden besteld, wordt degene met de snelste levering gekozen")
+    result = app.select_warehouse(basic_order_request, complete_more_far_than_AMS_stock)
+
+    assert result == "AMS"

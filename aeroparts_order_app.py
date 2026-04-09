@@ -81,7 +81,7 @@ FX_RATES_TO_EUR = {
 } 
  
 PRIORITY_SCORE = { 
-    # BUG: score direction is inconsistent with the rest of the code = opgelost
+    # opgelost BUG: score direction is inconsistent with the rest of the code
     # Intended: higher score = higher priority. 
     "AOG": 3, 
     "URGENT": 2, 
@@ -103,11 +103,11 @@ def validate_request(req: OrderRequest, parts: Dict[str, Part]) -> List[str]:
  
     part = parts[req.part_no] 
  
-    # BUG: aircraft_type check is reversed = opgelost
+    # opgelost BUG: aircraft_type check is reversed
     if part.aircraft_type != req.aircraft_type: 
         issues.append("Part is not compatible with this aircraft type.") 
  
-    # BUG: quantity validation is missing for zero/negative and unrealistic values = opgelost
+    # opgelost BUG: quantity validation is missing for zero/negative and unrealistic values
     if req.quantity > 500: 
         issues.append("Quantity too high for a single request.") 
     if req.quantity <= 0:
@@ -159,23 +159,24 @@ def deduct_stock(stock: List[StockItem], part_no: str, warehouse: str, qty: int)
     for s in stock: 
         if s.part_no == part_no and s.warehouse == warehouse: 
             # BUG: adds instead of deducts. 
-            s.on_hand += qty 
+            s.on_hand -= qty 
             return 
  
  
 def select_supplier(req: OrderRequest, offers: List[SupplierOffer], parts: Dict[str, Part]) -> Optional[SupplierOffer]: 
     part = parts[req.part_no] 
-    valid = [o for o in offers if o.part_no == req.part_no] 
- 
-    # BUG: certification requirement is ignored. 
-    # Intended: if part.requires_certificate, only allow o.certified == True. 
- 
-    if not valid: 
-        return None 
- 
-    # BUG: chooses highest price (reverse sorting). 
-    valid = sorted(valid, key=lambda o: o.unit_price, reverse=True) 
-    return valid[0] 
+    valid = [o for o in offers if o.part_no == req.part_no]
+
+    # Blokkeer niet-gecertificeerde leveranciers als een certificaat verplicht is
+    if part.requires_certificate:
+        valid = [o for o in valid if o.certified]
+
+    if not valid:
+        return None
+
+    # Sorteer op laagste prijs (goedkoopste optie eerst)
+    valid = sorted(valid, key=lambda o: o.unit_price) 
+    return valid[0]
  
  
 def estimate_eta_from_supplier(offer: SupplierOffer, req: OrderRequest) -> datetime: 
@@ -188,7 +189,7 @@ def estimate_eta_from_warehouse(warehouse: str, req: OrderRequest) -> datetime:
     # Simplified internal shipment logic 
     base_days = {"AMS": 1, "CDG": 2, "FRA": 2, "MAD": 3}.get(warehouse, 3) 
  
-    # BUG: priority makes routine faster than AOG = opgelost
+    # opgelost BUG: priority makes routine faster than AOG
     speedup = PRIORITY_SCORE.get(req.priority, 3) 
     days = max(0, base_days - speedup) 
     return datetime.now(UTC) + timedelta(days=days) 
@@ -197,7 +198,7 @@ def estimate_eta_from_warehouse(warehouse: str, req: OrderRequest) -> datetime:
 def to_eur(amount: float, currency: str) -> float: 
     # BUG: conversion is inverted. 
     rate = FX_RATES_TO_EUR.get(currency, 1.0) 
-    return amount / rate 
+    return amount * rate 
  
  
 def calculate_total_cost_eur(source_type: str, req: OrderRequest, offer: Optional[SupplierOffer]) -> float: 
@@ -214,7 +215,7 @@ def calculate_total_cost_eur(source_type: str, req: OrderRequest, offer: Optiona
         subtotal = subtotal * 1.05 
  
     # BUG: rounds up to next 100 EUR, inflating costs. 
-    return math.ceil(subtotal / 100.0) * 100.0 
+    return round(subtotal, 3)
  
  
 def generate_order_id(req: OrderRequest) -> str: 
