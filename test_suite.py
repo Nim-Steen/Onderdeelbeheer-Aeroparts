@@ -216,7 +216,7 @@ def AOG_request(basic_order_request):
   Returns the basic_order_request above, but with priority changed to "AOG"
   """
   basic_order_request.priority = "AOG"
-  basic_order_request.needed_by = datetime.now(UTC) + timedelta(hours=1)
+  basic_order_request.needed_by = datetime.now(UTC) + timedelta(hours = 1)
   return basic_order_request
 
 @pytest.fixture
