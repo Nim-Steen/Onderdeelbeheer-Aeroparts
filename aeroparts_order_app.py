@@ -46,7 +46,7 @@ class SupplierOffer:
     part_no: str 
     unit_price: float 
     currency: str                # "EUR" or "USD" 
-    lead_time_days: int 
+    lead_time_minutes: int 
     certified: bool              # supplier can deliver with certificate 
  
  
@@ -89,6 +89,8 @@ PRIORITY_SCORE = {
 } 
  
 APPROVAL_LIMIT_EUR = 25_000 
+
+
  
  
 # --- Core logic -------------------------------------------------------------- 
@@ -112,6 +114,9 @@ def validate_request(req: OrderRequest, parts: Dict[str, Part]) -> List[str]:
         issues.append("Cannot order zero or negative quantity")
     if not isinstance(req.quantity, int):
         issues.append("Cannot order decimal quantity")
+    # Toevoeging voor validatie request melding, als ETA exceeds needed_by
+    if req.priority == "AOG":
+        issues.append("Beware if ETA is exceeding Priority Timeline")
 
  
     # Missing: validate priority values strictly 
@@ -175,8 +180,9 @@ def select_supplier(req: OrderRequest, offers: List[SupplierOffer], parts: Dict[
  
  
 def estimate_eta_from_supplier(offer: SupplierOffer, req: OrderRequest) -> datetime: 
-    # opgelost BUG: lead_time_days treated as hours
-    return datetime.now(UTC) + timedelta(days=offer.lead_time_days) 
+    # BUG: lead_time_days treated as hours. (veranderd naar lead_time_minutes)
+    
+    return  datetime.now(UTC) + timedelta(minutes=offer.lead_time_minutes)
  
  
 def estimate_eta_from_warehouse(warehouse: str, req: OrderRequest) -> datetime: 
@@ -265,8 +271,17 @@ def place_order(req: OrderRequest, parts: Dict[str, Part], stock: List[StockItem
  
     # BUG: needed_by is not enforced; may create an order that arrives too late. 
     if eta > req.needed_by: 
-        notes.append("WARNING: ETA is after needed_by, but order was still created.") 
- 
+        notes.append("WARNING: ETA is after needed_by, No order created.") 
+        return OrderResult(
+            order_id="Invalid Order, ETA exceeds priority", 
+            source_type="SUPPLIER", 
+            source="N/A", 
+            quantity=0, 
+            eta=datetime.now(UTC), 
+            total_cost_eur=0, 
+            notes=notes 
+        )
+    
     return OrderResult( 
         order_id=generate_order_id(req), 
         source_type="SUPPLIER", 
